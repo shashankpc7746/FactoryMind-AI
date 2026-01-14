@@ -1,0 +1,160 @@
+import { useState } from 'react';
+import { Search, MessageSquare, FileText, Clock } from 'lucide-react';
+import { Card } from './ui/card';
+import { Input } from './ui/input';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+
+interface HistoryItem {
+  id: string;
+  type: 'chat' | 'report';
+  title: string;
+  date: Date;
+  preview: string;
+}
+
+export function History() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [history] = useState<HistoryItem[]>([
+    {
+      id: '1',
+      type: 'chat',
+      title: 'Quality control process inquiry',
+      date: new Date('2026-01-14 10:30'),
+      preview: 'Asked about SOP for quality control procedures and received detailed steps...',
+    },
+    {
+      id: '2',
+      type: 'report',
+      title: 'Production Efficiency Report - December 2025',
+      date: new Date('2026-01-05 14:20'),
+      preview: 'Overall production efficiency improved by 15% compared to previous month...',
+    },
+    {
+      id: '3',
+      type: 'chat',
+      title: 'Maintenance schedule Line 3',
+      date: new Date('2026-01-13 09:15'),
+      preview: 'Queried maintenance schedule for production Line 3...',
+    },
+    {
+      id: '4',
+      type: 'report',
+      title: 'Material Usage Analysis - Week 2',
+      date: new Date('2026-01-12 16:45'),
+      preview: 'Material consumption patterns show optimal usage with minimal waste...',
+    },
+    {
+      id: '5',
+      type: 'chat',
+      title: 'Safety protocols for chemical handling',
+      date: new Date('2026-01-11 11:00'),
+      preview: 'Discussed safety procedures for handling chemical materials in production...',
+    },
+    {
+      id: '6',
+      type: 'chat',
+      title: 'Shift scheduling optimization',
+      date: new Date('2026-01-10 13:30'),
+      preview: 'Explored best practices for optimizing shift schedules during peak season...',
+    },
+  ]);
+
+  const filteredHistory = history.filter(
+    (item) =>
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.preview.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Search */}
+      <Card className="p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search history..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </Card>
+
+      {/* History List */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Recent Activity</h3>
+          <Badge variant="secondary">{filteredHistory.length} items</Badge>
+        </div>
+
+        {filteredHistory.map((item) => (
+          <Card
+            key={item.id}
+            className="p-5 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <div className="flex items-start gap-4">
+              {/* Icon */}
+              <div
+                className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  item.type === 'chat'
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-accent/20 text-accent'
+                }`}
+              >
+                {item.type === 'chat' ? (
+                  <MessageSquare className="w-5 h-5" />
+                ) : (
+                  <FileText className="w-5 h-5" />
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <h4 className="font-semibold group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h4>
+                  <Badge variant={item.type === 'chat' ? 'default' : 'secondary'}>
+                    {item.type === 'chat' ? 'Chat' : 'Report'}
+                  </Badge>
+                </div>
+
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                  {item.preview}
+                </p>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>
+                      {item.date.toLocaleDateString()} at {item.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    View Details
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
+
+        {filteredHistory.length === 0 && (
+          <Card className="p-12">
+            <div className="text-center text-muted-foreground">
+              <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No items found</p>
+              <p className="text-sm mt-1">Try adjusting your search query</p>
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}

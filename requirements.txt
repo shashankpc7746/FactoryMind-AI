@@ -1,0 +1,35 @@
+# FactoryMind AI Backend Requirements
+# Python 3.9+
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.9
+
+# LLM & RAG
+openai==1.12.0
+langchain==0.1.16
+langchain-community==0.0.38
+langchain-openai==0.0.8
+
+# Vector Database
+faiss-cpu==1.7.4
+# Use faiss-gpu if you have CUDA support: faiss-gpu==1.7.4
+
+# Document Processing
+pypdf==4.0.2
+pypdfium2==4.26.0
+
+# Data Processing
+pandas==2.2.0
+numpy==1.26.4
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# PDF Generation
+reportlab==4.0.9
+
+# Utilities
+python-dotenv==1.0.1
+pydantic==2.6.1
+pydantic-settings==2.1.0

@@ -11,11 +11,12 @@ groq==0.4.2
 langchain==0.1.16
 langchain-community==0.0.38
 requests==2.31.0
+huggingface-hub==0.20.3  # For HuggingFace Inference API
 # langchain-openai==0.0.8  # Replaced with Groq (free)
 # sentence-transformers - NO LONGER NEEDED! Using HF Inference API instead
 
 # Vector Database
-faiss-cpu==1.7.4
+faiss-cpu==1.9.0.post1  # Updated for Python 3.10+ compatibility
 # Use faiss-gpu if you have CUDA support: faiss-gpu==1.7.4
 
 # Document Processing

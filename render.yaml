@@ -20,7 +20,7 @@ services:
       - key: HUGGINGFACE_API_KEY
         sync: false # Set manually in Render dashboard
       - key: ALLOWED_ORIGINS
-        value: https://factorymind-frontend.onrender.com # Update with your frontend URL
+        value: https://factorymind-ai.onrender.com # Update with your frontend URL
 
   # Frontend Static Site
   - type: web

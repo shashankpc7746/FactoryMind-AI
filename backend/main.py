@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import List, Optional
 from datetime import datetime
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from parent directory
+load_dotenv(Path(__file__).parent.parent / '.env')
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware

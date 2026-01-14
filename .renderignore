@@ -1,5 +1,9 @@
 # Files to ignore during Render deployment
 
+# Backend files (for frontend deployment)
+requirements.txt
+backend/
+
 # Virtual environments
 venv/
 fact-ai/

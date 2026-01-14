@@ -21,16 +21,11 @@ services:
         sync: false # Set manually in Render dashboard
       - key: ALLOWED_ORIGINS
         value: https://factorymind-frontend.onrender.com # Update with your frontend URL
-    disk:
-      name: factorymind-data
-      mountPath: /opt/render/project/src
-      sizeGB: 1 # Free tier: 1GB, can increase on paid plans
 
   # Frontend Static Site
   - type: web
     name: factorymind-frontend
     runtime: static
-    region: oregon # Same region as backend
     branch: main
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist

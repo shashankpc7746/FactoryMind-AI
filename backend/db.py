@@ -26,8 +26,8 @@ class HuggingFaceInferenceEmbeddings(Embeddings):
     def __init__(self, api_key: str, model: str = "sentence-transformers/all-MiniLM-L6-v2"):
         self.api_key = api_key
         self.model = model
-        # Using official HuggingFace InferenceClient
-        self.client = InferenceClient(api_key=api_key)
+        # Using official HuggingFace InferenceClient - token parameter, not api_key
+        self.client = InferenceClient(token=api_key)
     
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """Embed multiple documents using HF Inference API."""

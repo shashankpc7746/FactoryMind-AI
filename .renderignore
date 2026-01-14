@@ -1,0 +1,46 @@
+# Files to ignore during Render deployment
+
+# Virtual environments
+venv/
+fact-ai/
+env/
+ENV/
+
+# Node modules
+node_modules/
+
+# Development files
+.env
+.env.local
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Local data (will be on persistent disk)
+# Keep these commented out so structure is created
+# data/
+# vector_store/
+
+# Test files
+test_*.py
+*_test.py

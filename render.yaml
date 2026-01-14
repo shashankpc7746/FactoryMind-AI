@@ -1,0 +1,43 @@
+# Render Blueprint for FactoryMind AI
+# This file defines both backend and frontend services
+
+services:
+  # Backend API Service
+  - type: web
+    name: factorymind-backend
+    runtime: python
+    region: oregon # Change to your preferred region
+    plan: free # Change to 'starter' for production
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: GROQ_API_KEY
+        sync: false # Set manually in Render dashboard
+      - key: HUGGINGFACE_API_KEY
+        sync: false # Set manually in Render dashboard
+      - key: ALLOWED_ORIGINS
+        value: https://factorymind-frontend.onrender.com # Update with your frontend URL
+    disk:
+      name: factorymind-data
+      mountPath: /opt/render/project/src
+      sizeGB: 1 # Free tier: 1GB, can increase on paid plans
+
+  # Frontend Static Site
+  - type: web
+    name: factorymind-frontend
+    runtime: static
+    region: oregon # Same region as backend
+    branch: main
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://factorymind-backend.onrender.com # Update after backend is deployed
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

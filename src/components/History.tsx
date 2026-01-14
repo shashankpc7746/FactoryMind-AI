@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, MessageSquare, FileText, Clock } from 'lucide-react';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
@@ -15,7 +15,55 @@ interface HistoryItem {
 
 export function History() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [history] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/history');
+        const data = await response.json();
+        
+        const items: HistoryItem[] = [];
+        
+        // Add reports
+        if (data.reports?.items) {
+          data.reports.items.forEach((report: any) => {
+            items.push({
+              id: report.id,
+              type: 'report',
+              title: `Report: ${report.filename || 'Untitled'}`,
+              date: new Date(report.date || Date.now()),
+              preview: typeof report.summary === 'string' ? report.summary.slice(0, 100) : (report.summary?.executive_summary?.slice(0, 100) || 'Generated report summary...')
+            });
+          });
+        }
+        
+        // Add documents
+        if (data.documents?.items) {
+          data.documents.items.forEach((doc: any) => {
+            items.push({
+              id: doc.filename,
+              type: 'chat',
+              title: `Document: ${doc.filename}`,
+              date: new Date(doc.upload_date ? doc.upload_date * 1000 : Date.now()),
+              preview: `Uploaded document`
+            });
+          });
+        }
+        
+        // Sort by date descending
+        items.sort((a, b) => b.date.getTime() - a.date.getTime());
+        setHistory(items);
+      } catch (error) {
+        console.error('Failed to fetch history:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchHistory();
+  }, []);
 
   const filteredHistory = history.filter(
     (item) =>
@@ -102,12 +150,20 @@ export function History() {
           </Card>
         ))}
 
-        {filteredHistory.length === 0 && (
+        {filteredHistory.length === 0 && !loading && (
           <Card className="p-12">
             <div className="text-center text-muted-foreground">
               <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No items found</p>
               <p className="text-sm mt-1">Try adjusting your search query</p>
+            </div>
+          </Card>
+        )}
+        
+        {loading && (
+          <Card className="p-12">
+            <div className="text-center text-muted-foreground">
+              <p>Loading history...</p>
             </div>
           </Card>
         )}

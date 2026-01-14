@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import Dict, List
 import logging
+import json
 
 import pandas as pd
 import numpy as np
@@ -31,8 +32,14 @@ class ReportEngine:
         self.data_path = Path(data_path)
         self.data_path.mkdir(parents=True, exist_ok=True)
         
+        # Persistent storage for reports metadata
+        self.reports_metadata_file = self.data_path / "reports_metadata.json"
+        
         self.llm_client = LLMClient()
         self.reports_cache = []  # Store generated reports in memory
+        
+        # Load existing reports from disk on startup
+        self._load_reports_from_disk()
     
     def analyze_data_file(self, file_path: str, filename: str) -> Dict:
         """
@@ -156,12 +163,14 @@ class ReportEngine:
             
             # First, analyze the data
             data_summary = self.analyze_data_file(file_path, filename)
+            logger.info(f"Data analysis complete for {filename}")
             
             # Generate LLM-based report
             report_content = self.llm_client.generate_report(
                 data_summary=data_summary,
                 filename=filename
             )
+            logger.info(f"LLM report generation complete for {filename}")
             
             # Build complete report structure
             report = {
@@ -178,12 +187,16 @@ class ReportEngine:
             
             # Cache the report
             self.reports_cache.append(report)
+            logger.info(f"Report added to cache, total reports: {len(self.reports_cache)}")
+            
+            # Save to disk for persistence
+            self._save_reports_to_disk()
             
             logger.info(f"Report generated successfully: {report['id']}")
             return report
         
         except Exception as e:
-            logger.error(f"Error generating report: {str(e)}")
+            logger.error(f"Error generating report: {str(e)}", exc_info=True)
             raise
     
     def _format_metrics(self, data_summary: Dict, report_content: Dict) -> List[Dict]:
@@ -259,6 +272,39 @@ class ReportEngine:
             if report['id'] == report_id:
                 return report
         return None
+    
+    def _load_reports_from_disk(self):
+        """Load existing reports from disk on startup."""
+        try:
+            if self.reports_metadata_file.exists():
+                with open(self.reports_metadata_file, 'r', encoding='utf-8') as f:
+                    self.reports_cache = json.load(f)
+                logger.info(f"Loaded {len(self.reports_cache)} reports from disk")
+            else:
+                logger.info("No existing reports found")
+        except Exception as e:
+            logger.error(f"Error loading reports from disk: {str(e)}")
+            self.reports_cache = []
+    
+    def _save_reports_to_disk(self):
+        """Save current reports to disk for persistence."""
+        try:
+            with open(self.reports_metadata_file, 'w', encoding='utf-8') as f:
+                json.dump(self.reports_cache, f, indent=2, ensure_ascii=False)
+            logger.info(f"Saved {len(self.reports_cache)} reports to disk")
+        except Exception as e:
+            logger.error(f"Error saving reports to disk: {str(e)}")
+    
+    def clear_all_reports(self):
+        """Clear all reports - used by Dangerous Zone in settings."""
+        try:
+            self.reports_cache = []
+            if self.reports_metadata_file.exists():
+                self.reports_metadata_file.unlink()
+            logger.info("All reports cleared successfully")
+        except Exception as e:
+            logger.error(f"Error clearing reports: {str(e)}")
+            raise
     
     def export_report_to_pdf(self, report_id: str, output_path: str) -> str:
         """

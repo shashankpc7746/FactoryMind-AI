@@ -6,10 +6,11 @@ Internal Operations Intelligence Assistant Backend
 import os
 import shutil
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime
 import logging
 from dotenv import load_dotenv
+import math
 
 # Load environment variables from parent directory
 load_dotenv(Path(__file__).parent.parent / '.env')
@@ -18,6 +19,18 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
+
+def sanitize_floats(obj):
+    """Convert NaN, Infinity and -Infinity to None for JSON serialization."""
+    if isinstance(obj, dict):
+        return {k: sanitize_floats(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_floats(item) for item in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    return obj
 
 from rag_engine import RAGEngine
 from report_engine import ReportEngine
@@ -45,15 +58,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize engines
-rag_engine = RAGEngine(
-    docs_path="./data/docs",
-    vector_store_path="./vector_store"
-)
+# Get API keys from environment
+hf_api_key = os.getenv("HF_API_KEY")
+if not hf_api_key:
+    logger.warning("HF_API_KEY not found. Get a free key at: https://huggingface.co/settings/tokens")
 
-report_engine = ReportEngine(
-    data_path="./data/csv"
-)
+# Initialize engines
+try:
+    rag_engine = RAGEngine(
+        docs_path="./data/docs",
+        vector_store_path="./vector_store",
+        hf_api_key=hf_api_key
+    )
+    logger.info("RAG engine initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize RAG engine: {e}", exc_info=True)
+    logger.warning("RAG engine will be unavailable for document uploads")
+    rag_engine = None
+
+try:
+    logger.info("Initializing Report engine...")
+    report_engine = ReportEngine(
+        data_path="./data/csv"
+    )
+    logger.info(f"Report engine initialized successfully, cached reports: {len(report_engine.reports_cache)}")
+except Exception as e:
+    logger.error(f"Failed to initialize Report engine: {e}", exc_info=True)
+    logger.warning("Using fallback Report engine")
+    # Create a simple fallback object with required methods
+    class FallbackReportEngine:
+        def get_all_reports(self):
+            return []
+        def clear_all_reports(self):
+            pass
+    report_engine = FallbackReportEngine()
 
 # Pydantic models
 class QueryRequest(BaseModel):
@@ -74,10 +112,10 @@ class ReportResponse(BaseModel):
     id: str
     title: str
     date: str
-    summary: str
+    summary: Union[str, dict]
     metrics: List[dict]
-    observations: List[str]
-    recommendations: List[str]
+    observations: List[Union[str, dict]]
+    recommendations: List[Union[str, dict]]
 
 
 # ============================================================================
@@ -202,6 +240,37 @@ async def delete_document(filename: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.delete("/clear-all-data")
+async def clear_all_data():
+    """
+    Clear all data - documents, reports, and vector store (DANGEROUS ZONE).
+    
+    Returns:
+        Status of clearing operation
+    """
+    try:
+        logger.warning("DANGEROUS ZONE: Clearing all data...")
+        
+        # Clear all reports
+        if report_engine:
+            report_engine.clear_all_reports()
+            logger.info("Cleared all reports")
+        
+        # Clear all documents and vector store
+        if rag_engine:
+            rag_engine.clear_all_documents()
+            logger.info("Cleared all documents")
+        
+        logger.warning("All data cleared successfully")
+        return {
+            "status": "success",
+            "message": "All data cleared successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error clearing all data: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 # RAG QUERY
 # ============================================================================
@@ -292,6 +361,8 @@ async def generate_report(file: UploadFile = File(...)):
         Generated report
     """
     try:
+        logger.info(f"Received file for report generation: {file.filename}")
+        
         # Validate file type
         if not (file.filename.endswith('.csv') or 
                 file.filename.endswith('.xlsx') or 
@@ -307,15 +378,18 @@ async def generate_report(file: UploadFile = File(...)):
         with file_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        logger.info(f"Generating report for: {file.filename}")
+        logger.info(f"File saved. Generating report for: {file.filename}")
         
         # Generate report
         report = report_engine.generate_report(str(file_path), file.filename)
         
+        logger.info(f"Report generated successfully, returning response")
         return ReportResponse(**report)
     
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error generating report: {str(e)}")
+        logger.error(f"Error generating report: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -329,13 +403,16 @@ async def list_reports():
     """
     try:
         reports = report_engine.get_all_reports()
+        logger.info(f"Returning {len(reports)} reports")
+        # Sanitize float values that aren't JSON compliant (NaN, Infinity)
+        reports = sanitize_floats(reports)
         return {
             "status": "success",
             "count": len(reports),
             "reports": reports
         }
     except Exception as e:
-        logger.error(f"Error listing reports: {str(e)}")
+        logger.error(f"Error listing reports: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -409,9 +486,25 @@ async def get_history():
         Combined history of chats and reports
     """
     try:
-        documents = rag_engine.list_documents()
-        reports = report_engine.get_all_reports()
+        documents = []
+        reports = []
         
+        if rag_engine:
+            try:
+                documents = rag_engine.list_documents()
+            except Exception as e:
+                logger.warning(f"Error getting documents: {e}")
+        
+        if report_engine:
+            try:
+                reports = report_engine.get_all_reports()
+            except Exception as e:
+                logger.warning(f"Error getting reports: {e}")
+        
+        logger.info(f"History: {len(documents)} documents, {len(reports)} reports")
+        # Sanitize float values that aren't JSON compliant (NaN, Infinity)
+        documents = sanitize_floats(documents)
+        reports = sanitize_floats(reports)
         return {
             "status": "success",
             "documents": {
@@ -424,7 +517,7 @@ async def get_history():
             }
         }
     except Exception as e:
-        logger.error(f"Error retrieving history: {str(e)}")
+        logger.error(f"Error retrieving history: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -444,5 +537,5 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=8000,
-        reload=True
+        reload=False
     )

@@ -8,29 +8,102 @@ import pickle
 from typing import List, Dict, Tuple
 from pathlib import Path
 import logging
+import time
+import numpy as np
 
 from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings
 from langchain.schema import Document
+from langchain.embeddings.base import Embeddings
+from huggingface_hub import InferenceClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+class HuggingFaceInferenceEmbeddings(Embeddings):
+    """HuggingFace Inference API embeddings using InferenceClient - FREE, no local model needed!"""
+    
+    def __init__(self, api_key: str, model: str = "sentence-transformers/all-MiniLM-L6-v2"):
+        self.api_key = api_key
+        self.model = model
+        # Using official HuggingFace InferenceClient
+        self.client = InferenceClient(api_key=api_key)
+    
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """Embed multiple documents using HF Inference API."""
+        embeddings = []
+        for text in texts:
+            embedding = self._get_embedding(text)
+            embeddings.append(embedding)
+            time.sleep(0.1)  # Rate limiting for free tier
+        return embeddings
+    
+    def embed_query(self, text: str) -> List[float]:
+        """Embed a single query using HF Inference API."""
+        return self._get_embedding(text)
+    
+    def _get_embedding(self, text: str) -> List[float]:
+        """Get embedding from HuggingFace Inference API using InferenceClient."""
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                logger.debug(f"Requesting embedding for text (attempt {attempt + 1}/{max_retries})")
+                
+                # Use the official InferenceClient
+                result = self.client.feature_extraction(
+                    text,
+                    model=self.model
+                )
+                
+                # Convert numpy array to list if needed
+                if isinstance(result, np.ndarray):
+                    embedding = result.tolist()
+                    logger.debug(f"Got embedding with dimension {len(embedding)}")
+                    return embedding
+                elif isinstance(result, list):
+                    if len(result) > 0 and isinstance(result[0], list):
+                        # Assuming first element is the embedding for the input text
+                        logger.debug(f"Got embedding with dimension {len(result[0])}")
+                        return result[0]
+                    else:
+                        logger.debug(f"Got embedding with dimension {len(result)}")
+                        return result
+                else:
+                    logger.warning(f"Unexpected result type: {type(result)}")
+                    raise ValueError(f"Unexpected result type: {type(result)}")
+                    
+            except Exception as e:
+                logger.error(f"Embedding error (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                else:
+                    raise ValueError(f"Failed to get embedding after {max_retries} attempts: {e}")
+        
+        raise ValueError("Failed to get embedding after multiple retries")
+
+
 class VectorDBHandler:
     """Handles FAISS vector database operations."""
     
-    def __init__(self, vector_store_path: str = "./vector_store"):
+    def __init__(self, vector_store_path: str = "./vector_store", hf_api_key: str = None):
         """
         Initialize vector database handler.
         
         Args:
             vector_store_path: Path to store FAISS index
+            hf_api_key: HuggingFace API key for embeddings
         """
         self.vector_store_path = Path(vector_store_path)
         self.vector_store_path.mkdir(parents=True, exist_ok=True)
         
-        self.embeddings = OpenAIEmbeddings()
+        # Use HuggingFace Inference API (FREE, no PyTorch needed!)
+        if not hf_api_key:
+            raise ValueError("HuggingFace API key is required. Get one free at: https://huggingface.co/settings/tokens")
+        
+        self.embeddings = HuggingFaceInferenceEmbeddings(
+            api_key=hf_api_key,
+            model="sentence-transformers/all-MiniLM-L6-v2"
+        )
         self.vector_store = None
         self.metadata_file = self.vector_store_path / "metadata.pkl"
         
@@ -43,15 +116,18 @@ class VectorDBHandler:
         
         if index_path.exists():
             try:
+                logger.info("Loading existing vector store...")
                 self.vector_store = FAISS.load_local(
                     str(self.vector_store_path),
                     self.embeddings,
                     allow_dangerous_deserialization=True
                 )
-                logger.info("Loaded existing vector store")
+                logger.info("Successfully loaded existing vector store")
             except Exception as e:
-                logger.warning(f"Could not load existing vector store: {e}")
+                logger.error(f"Error loading vector store: {e}", exc_info=True)
                 self.vector_store = None
+        else:
+            logger.info("No existing vector store found, will create new one on first document")
     
     def add_documents(self, documents: List[Document]):
         """
@@ -207,3 +283,7 @@ class VectorDBHandler:
         except Exception as e:
             logger.error(f"Error clearing database: {str(e)}")
             raise
+    
+    def clear_vector_store(self):
+        """Alias for clear_database - clears entire vector store."""
+        self.clear_database()

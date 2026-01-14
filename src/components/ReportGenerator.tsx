@@ -34,9 +34,12 @@ export function ReportGenerator() {
   const loadReports = async () => {
     try {
       const response = await api.listReports();
-      setReports(response.reports);
+      // Handle both direct array and nested structure
+      const reportsList = response.reports || response.data || response || [];
+      setReports(Array.isArray(reportsList) ? reportsList : []);
     } catch (error) {
       console.error('Error loading reports:', error);
+      setReports([]);
       // Don't show error toast on initial load
     }
   };
@@ -152,14 +155,26 @@ export function ReportGenerator() {
       <div className="space-y-4">
         <h3 className="text-base sm:text-lg font-semibold">Generated Reports</h3>
         
-        {reports.map((report) => (
+        {reports.map((report) => {
+          // Safety check for required fields
+          if (!report || !report.id) return null;
+          
+          // Parse summary safely
+          const summaryText = typeof report.summary === 'string' 
+            ? report.summary 
+            : (report.summary?.executive_summary || 'No summary available');
+          
+          // Ensure metrics is an array
+          const metrics = Array.isArray(report.metrics) ? report.metrics : [];
+          
+          return (
           <Card key={report.id} className="hover:shadow-lg transition-shadow">
             <div className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-start justify-between gap-3 mb-3">
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm sm:text-base lg:text-lg mb-1">{report.title}</h4>
+                  <h4 className="font-semibold text-sm sm:text-base lg:text-lg mb-1">{report.title || 'Untitled Report'}</h4>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Generated on {new Date(report.date).toLocaleDateString()}
+                    Generated on {report.date ? new Date(report.date).toLocaleDateString() : 'Unknown date'}
                   </p>
                 </div>
                 <Badge variant="secondary" className="text-[10px] sm:text-xs flex-shrink-0">
@@ -168,11 +183,12 @@ export function ReportGenerator() {
                 </Badge>
               </div>
 
-              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">{report.summary}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">{summaryText}</p>
 
               {/* Quick Metrics */}
+              {metrics.length > 0 && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
-                {report.metrics.map((metric, idx) => (
+                {metrics.slice(0, 4).map((metric, idx) => (
                   <div key={idx} className="p-2 sm:p-3 rounded-lg bg-muted">
                     <p className="text-[10px] sm:text-xs text-muted-foreground mb-1 truncate">{metric.label}</p>
                     <div className="flex items-center gap-1 sm:gap-2">
@@ -187,6 +203,7 @@ export function ReportGenerator() {
                   </div>
                 ))}
               </div>
+              )}
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-2">
@@ -211,7 +228,8 @@ export function ReportGenerator() {
               </div>
             </div>
           </Card>
-        ))}
+        )})}
+
 
         {reports.length === 0 && (
           <Card className="p-12">
@@ -228,13 +246,20 @@ export function ReportGenerator() {
       <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
         <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">{selectedReport?.title}</DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">{selectedReport?.summary}</DialogDescription>
+            <DialogTitle className="text-base sm:text-lg">{selectedReport?.title || 'Report'}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              {selectedReport?.summary 
+                ? (typeof selectedReport.summary === 'string' 
+                    ? selectedReport.summary 
+                    : selectedReport.summary?.executive_summary || 'No summary available')
+                : 'No summary available'}
+            </DialogDescription>
           </DialogHeader>
 
           {selectedReport && (
             <div className="space-y-4 sm:space-y-6 mt-4">
               {/* Key Metrics */}
+              {selectedReport.metrics && Array.isArray(selectedReport.metrics) && selectedReport.metrics.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
                   <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -257,40 +282,49 @@ export function ReportGenerator() {
                   ))}
                 </div>
               </div>
+              )}
 
               {/* Observations */}
+              {selectedReport.observations && Array.isArray(selectedReport.observations) && selectedReport.observations.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
                   <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   Observations
                 </h3>
                 <ul className="space-y-2">
-                  {selectedReport.observations.map((obs, idx) => (
+                  {selectedReport.observations.map((obs, idx) => {
+                    const obsText = typeof obs === 'string' ? obs : (obs?.observation || JSON.stringify(obs));
+                    return (
                     <li key={idx} className="flex gap-2 sm:gap-3">
                       <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-xs sm:text-sm text-muted-foreground">{obs}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">{obsText}</span>
                     </li>
-                  ))}
+                  )})}
                 </ul>
               </div>
+              )}
 
               {/* Recommendations */}
+              {selectedReport.recommendations && Array.isArray(selectedReport.recommendations) && selectedReport.recommendations.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
                   <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   Recommendations
                 </h3>
                 <ul className="space-y-2">
-                  {selectedReport.recommendations.map((rec, idx) => (
+                  {selectedReport.recommendations.map((rec, idx) => {
+                    const recText = typeof rec === 'string' ? rec : (rec?.recommendation || JSON.stringify(rec));
+                    return (
                     <li key={idx} className="flex gap-2 sm:gap-3">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <span className="text-[10px] sm:text-xs font-semibold text-primary">{idx + 1}</span>
                       </div>
-                      <span className="text-xs sm:text-sm text-muted-foreground">{rec}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">{recText}</span>
                     </li>
-                  ))}
+                  )})}
                 </ul>
               </div>
+              )}
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-border">

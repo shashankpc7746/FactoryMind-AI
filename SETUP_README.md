@@ -87,7 +87,7 @@ cd "C:\Users\Shashank Gupta\Vs-code\Factory Mind AI"
 
 ```bash
 # Create virtual environment (recommended)
-python -m venv venv
+python -m venv fact-ai
 
 # Activate virtual environment
 # Windows:

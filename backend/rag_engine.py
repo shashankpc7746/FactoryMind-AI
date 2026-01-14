@@ -25,7 +25,8 @@ class RAGEngine:
     def __init__(
         self, 
         docs_path: str = "./data/docs",
-        vector_store_path: str = "./vector_store"
+        vector_store_path: str = "./vector_store",
+        hf_api_key: str = None
     ):
         """
         Initialize RAG engine.
@@ -33,11 +34,12 @@ class RAGEngine:
         Args:
             docs_path: Path to store uploaded documents
             vector_store_path: Path to vector database
+            hf_api_key: HuggingFace API key for embeddings
         """
         self.docs_path = Path(docs_path)
         self.docs_path.mkdir(parents=True, exist_ok=True)
         
-        self.vector_db = VectorDBHandler(vector_store_path)
+        self.vector_db = VectorDBHandler(vector_store_path, hf_api_key=hf_api_key)
         self.llm_client = LLMClient()
         
         # Text splitter configuration
@@ -199,6 +201,21 @@ class RAGEngine:
         
         except Exception as e:
             logger.error(f"Error deleting document: {str(e)}")
+            raise
+    
+    def clear_all_documents(self):
+        """Clear all documents and vector store - used by Dangerous Zone."""
+        try:
+            # Delete all PDFs
+            for pdf_file in self.docs_path.glob("*.pdf"):
+                pdf_file.unlink()
+            
+            # Clear vector store
+            self.vector_db.clear_vector_store()
+            
+            logger.info("All documents and vector store cleared successfully")
+        except Exception as e:
+            logger.error(f"Error clearing all documents: {str(e)}")
             raise
     
     def _format_size(self, size_bytes: int) -> str:

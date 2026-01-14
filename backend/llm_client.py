@@ -1,11 +1,11 @@
 """
 LLM Client Wrapper
-Handles OpenAI API interactions with error handling and fallback options.
+Handles Groq API interactions with error handling (Free Alternative to OpenAI).
 """
 
 import os
 from typing import Optional, List, Dict
-from openai import OpenAI
+from groq import Groq
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -13,22 +13,23 @@ logger = logging.getLogger(__name__)
 
 
 class LLMClient:
-    """Wrapper for OpenAI API with error handling and configuration."""
+    """Wrapper for Groq API (Free LLM) with error handling and configuration."""
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "llama-3.3-70b-versatile"):
         """
-        Initialize LLM client.
+        Initialize LLM client with Groq (Free Alternative).
         
         Args:
-            api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
-            model: Model name (default: gpt-4)
+            api_key: Groq API key (defaults to GROQ_API_KEY env var)
+            model: Model name (default: llama-3.3-70b-versatile - latest 70B)
+                  Options: llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768
         """
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.api_key = api_key or os.getenv("GROQ_API_KEY")
         if not self.api_key:
-            logger.warning("No OpenAI API key found. Some features may not work.")
+            logger.warning("No Groq API key found. Get free key at: https://console.groq.com")
         
         self.model = model
-        self.client = OpenAI(api_key=self.api_key) if self.api_key else None
+        self.client = Groq(api_key=self.api_key) if self.api_key else None
     
     def generate_response(
         self, 
@@ -50,7 +51,7 @@ class LLMClient:
             Generated text response
         """
         if not self.client:
-            raise ValueError("OpenAI client not initialized. Please set OPENAI_API_KEY.")
+            raise ValueError("Groq client not initialized. Get free API key at: https://console.groq.com")
         
         try:
             messages = []
@@ -164,14 +165,51 @@ Format your response as JSON with keys: summary, key_metrics, observations, reco
                 max_tokens=2000
             )
             
+            logger.info(f"LLM raw response (first 200 chars): {response[:200]}...")
+            
             # Try to parse JSON response
             import json
+            import re
             try:
+                # Try direct JSON parse first
                 report_data = json.loads(response)
-            except:
-                # Fallback: structure the response manually
-                report_data = self._structure_fallback_report(response, data_summary)
+                logger.info("Successfully parsed response as direct JSON")
+            except Exception as e:
+                logger.warning(f"Direct JSON parse failed: {str(e)[:100]}")
+                # Try to extract JSON from markdown code blocks
+                json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response, re.DOTALL)
+                if json_match:
+                    try:
+                        report_data = json.loads(json_match.group(1))
+                        logger.info("Successfully extracted JSON from markdown code block")
+                    except:
+                        # Extract JSON without code blocks
+                        json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                        if json_match:
+                            try:
+                                report_data = json.loads(json_match.group(0))
+                                logger.info("Successfully extracted JSON from response body")
+                            except:
+                                logger.warning("All JSON parsing attempts failed, using fallback")
+                                report_data = self._structure_fallback_report(response, data_summary)
+                        else:
+                            logger.warning("No JSON found in response, using fallback")
+                            report_data = self._structure_fallback_report(response, data_summary)
+                else:
+                    # Try to find JSON object in the response
+                    json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                    if json_match:
+                        try:
+                            report_data = json.loads(json_match.group(0))
+                            logger.info("Successfully extracted JSON from response (fallback regex)")
+                        except:
+                            logger.warning("Fallback JSON extraction failed, using structured fallback")
+                            report_data = self._structure_fallback_report(response, data_summary)
+                    else:
+                        logger.warning("No JSON pattern found, using structured fallback")
+                        report_data = self._structure_fallback_report(response, data_summary)
             
+            logger.info(f"Report parsing complete. Keys: {list(report_data.keys())}")
             return report_data
         
         except Exception as e:

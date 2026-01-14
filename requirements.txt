@@ -8,6 +8,7 @@ python-multipart==0.0.9
 
 # LLM & RAG
 groq==0.11.0  # Updated for compatibility with latest httpx
+httpx==0.27.0  # Pin to version compatible with groq
 langchain==0.1.16
 langchain-community==0.0.38
 requests==2.31.0

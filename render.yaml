@@ -24,7 +24,7 @@ services:
   # Frontend Static Site
   - type: web
     name: factorymind-ai
-    runtime: static
+    runtime: node
     branch: main
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist

@@ -15,50 +15,7 @@ interface HistoryItem {
 
 export function History() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [history] = useState<HistoryItem[]>([
-    {
-      id: '1',
-      type: 'chat',
-      title: 'Quality control process inquiry',
-      date: new Date('2026-01-14 10:30'),
-      preview: 'Asked about SOP for quality control procedures and received detailed steps...',
-    },
-    {
-      id: '2',
-      type: 'report',
-      title: 'Production Efficiency Report - December 2025',
-      date: new Date('2026-01-05 14:20'),
-      preview: 'Overall production efficiency improved by 15% compared to previous month...',
-    },
-    {
-      id: '3',
-      type: 'chat',
-      title: 'Maintenance schedule Line 3',
-      date: new Date('2026-01-13 09:15'),
-      preview: 'Queried maintenance schedule for production Line 3...',
-    },
-    {
-      id: '4',
-      type: 'report',
-      title: 'Material Usage Analysis - Week 2',
-      date: new Date('2026-01-12 16:45'),
-      preview: 'Material consumption patterns show optimal usage with minimal waste...',
-    },
-    {
-      id: '5',
-      type: 'chat',
-      title: 'Safety protocols for chemical handling',
-      date: new Date('2026-01-11 11:00'),
-      preview: 'Discussed safety procedures for handling chemical materials in production...',
-    },
-    {
-      id: '6',
-      type: 'chat',
-      title: 'Shift scheduling optimization',
-      date: new Date('2026-01-10 13:30'),
-      preview: 'Explored best practices for optimizing shift schedules during peak season...',
-    },
-  ]);
+  const [history] = useState<HistoryItem[]>([]);
 
   const filteredHistory = history.filter(
     (item) =>

@@ -25,34 +25,24 @@ interface HeaderProps {
 }
 
 export function Header({ title, onNavigate, userName }: HeaderProps) {
-  const [notifications, setNotifications] = useState([
-    {
-      id: '1',
-      title: 'Document Indexed',
-      message: 'Quality_Control_SOP_v2.pdf has been indexed successfully',
-      time: '5 min ago',
-      unread: true,
-    },
-    {
-      id: '2',
-      title: 'Report Generated',
-      message: 'Production Efficiency Report is ready to view',
-      time: '1 hour ago',
-      unread: true,
-    },
-    {
-      id: '3',
-      title: 'System Update',
-      message: 'New features available in Chat Assistant',
-      time: '2 hours ago',
-      unread: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    title: string;
+    message: string;
+    time: string;
+    unread: boolean;
+  }>>([]);
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
   const handleMarkAllAsRead = () => {
     setNotifications(notifications.map(n => ({ ...n, unread: false })));
+  };
+
+  const handleNotificationClick = (id: string) => {
+    setNotifications(notifications.map(n => 
+      n.id === id ? { ...n, unread: false } : n
+    ));
   };
 
   return (
@@ -102,6 +92,7 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id)}
                     className={`p-4 border-b border-border hover:bg-muted/50 cursor-pointer transition-colors ${
                       notification.unread ? 'bg-primary/5' : ''
                     }`}
@@ -146,9 +137,6 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onNavigate?.('settings')}>
                 Profile Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onNavigate?.('settings')}>
-                Preferences
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => alert('Logging out...')}>

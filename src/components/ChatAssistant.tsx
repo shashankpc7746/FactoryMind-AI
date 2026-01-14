@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import * as api from '../services/api';
 
 interface Message {
@@ -51,7 +51,7 @@ export function ChatAssistant() {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev: Message[]) => [...prev, userMessage]);
     const currentInput = input;
     setInput('');
     setIsTyping(true);
@@ -68,7 +68,7 @@ export function ChatAssistant() {
         citations: response.citations.length > 0 ? response.citations : undefined,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev: Message[]) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error querying documents:', error);
       
@@ -79,7 +79,7 @@ export function ChatAssistant() {
         timestamp: new Date(),
       };
       
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev: Message[]) => [...prev, errorMessage]);
       toast.error('Failed to get response from AI');
     } finally {
       setIsTyping(false);
@@ -122,7 +122,7 @@ export function ChatAssistant() {
           content: `Document "${file.name}" has been successfully uploaded and indexed. You can now ask questions about its contents.`,
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, systemMessage]);
+        setMessages((prev: Message[]) => [...prev, systemMessage]);
       } else if (isDataFile) {
         toast.loading('Uploading data file...', { id: 'upload' });
         await api.uploadDataFile(file);
@@ -135,7 +135,7 @@ export function ChatAssistant() {
           content: `Data file "${file.name}" has been uploaded. Would you like me to generate an operations report from this data?`,
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, systemMessage]);
+        setMessages((prev: Message[]) => [...prev, systemMessage]);
       }
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -153,7 +153,7 @@ export function ChatAssistant() {
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
         <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-          {messages.map((message) => (
+          {messages.map((message: Message) => (
             <div
               key={message.id}
               className={`flex gap-3 sm:gap-4 ${
@@ -184,7 +184,7 @@ export function ChatAssistant() {
                     <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border/20">
                       <p className="text-xs sm:text-sm font-medium mb-2">Sources:</p>
                       <div className="flex flex-wrap gap-2">
-                        {message.citations.map((citation, idx) => (
+                        {message.citations.map((citation: string, idx: number) => (
                           <Badge
                             key={idx}
                             variant="secondary"
@@ -286,7 +286,8 @@ export function ChatAssistant() {
               type="file"
               className="hidden"
               accept=".pdf,.doc,.docx,.txt,.csv,.xlsx"
-              onChange={handleFileUpload}
+              onChange={handleFileChange}
+              aria-label="Upload file"
             />
             <Button
               variant="outline"
@@ -301,8 +302,8 @@ export function ChatAssistant() {
             <div className="flex-1 relative">
               <Textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleSend();

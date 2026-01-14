@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import * as api from '../services/api';
 
 interface Report {
@@ -13,7 +13,7 @@ interface Report {
   title: string;
   date: string;
   summary: string;
-  metrics: Array<{ label: string; value: string; trend?: 'up' | 'down' }>;
+  metrics: Array<{ label: string; value: string; trend?: 'up' | 'down' | 'neutral' }>;
   observations: string[];
   recommendations: string[];
 }
@@ -143,6 +143,7 @@ export function ReportGenerator() {
             className="hidden"
             accept=".csv,.xlsx,.xls"
             onChange={handleFileSelect}
+            aria-label="Upload data file for report generation"
           />
         </div>
       </Card>

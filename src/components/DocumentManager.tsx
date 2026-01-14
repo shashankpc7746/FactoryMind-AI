@@ -4,7 +4,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import * as api from '../services/api';
 
 interface Document {
@@ -176,6 +176,7 @@ export function DocumentManager() {
             accept=".pdf"
             multiple
             onChange={handleFileSelect}
+            aria-label="Upload PDF documents"
           />
         </div>
       </Card>

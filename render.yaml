@@ -4,9 +4,8 @@
 services:
   # Backend API Service
   - type: web
-    name: factorymind-backend
+    name: factorymind-ai-backend
     runtime: python
-    region: oregon # Change to your preferred region
     plan: free # Change to 'starter' for production
     branch: main
     buildCommand: pip install -r requirements.txt
@@ -24,14 +23,14 @@ services:
 
   # Frontend Static Site
   - type: web
-    name: factorymind-frontend
+    name: factorymind-ai
     runtime: static
     branch: main
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        value: https://factorymind-backend.onrender.com # Update after backend is deployed
+        value: https://factorymind-ai-backend.onrender.com # Update after backend is deployed
     routes:
       - type: rewrite
         source: /*

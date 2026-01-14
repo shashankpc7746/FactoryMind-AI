@@ -29,14 +29,14 @@ export interface Report {
   id: string;
   title: string;
   date: string;
-  summary: string;
+  summary: string | { executive_summary?: string };
   metrics: Array<{
     label: string;
     value: string;
     trend?: 'up' | 'down' | 'neutral';
   }>;
-  observations: string[];
-  recommendations: string[];
+  observations: Array<string | { observation?: string }>;
+  recommendations: Array<string | { recommendation?: string }>;
 }
 
 export interface Document {
@@ -156,7 +156,7 @@ export async function deleteDocument(filename: string): Promise<void> {
 /**
  * List all generated reports
  */
-export async function listReports(): Promise<{ reports: Report[]; count: number }> {
+export async function listReports(): Promise<{ reports: Report[]; count: number; data?: Report[] }> {
   const response = await fetch(`${API_BASE_URL}/reports`);
 
   if (!response.ok) {

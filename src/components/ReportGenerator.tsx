@@ -12,10 +12,10 @@ interface Report {
   id: string;
   title: string;
   date: string;
-  summary: string;
+  summary: string | { executive_summary?: string };
   metrics: Array<{ label: string; value: string; trend?: 'up' | 'down' | 'neutral' }>;
-  observations: string[];
-  recommendations: string[];
+  observations: Array<string | { observation?: string }>;
+  recommendations: Array<string | { recommendation?: string }>;
 }
 
 export function ReportGenerator() {

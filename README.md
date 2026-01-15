@@ -11,6 +11,7 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 ## ✨ Key Features
 
 ### 🤖 RAG-Based Knowledge Assistant
+
 - **Smart Document Processing** - Upload SOPs, manuals, policies, and other PDFs
 - **Intelligent Search** - Ask questions in natural language and get precise answers
 - **Source Citations** - Every answer includes references to source documents
@@ -18,6 +19,7 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 - **Context-Aware** - Understands context and provides relevant information
 
 ### 📊 Automated Report Generator
+
 - **Data Analysis** - Upload CSV/Excel files for instant insights
 - **AI-Powered Insights** - Automatically generates executive summaries
 - **Anomaly Detection** - Identifies outliers and patterns using statistical methods
@@ -26,6 +28,7 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 - **Actionable Recommendations** - Get data-driven suggestions for improvement
 
 ### 🎨 Modern User Interface
+
 - **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
 - **Dark/Light Themes** - Choose your preferred viewing mode
 - **Intuitive Navigation** - Clean sidebar with easy access to all features
@@ -47,6 +50,7 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 ## 🏗️ Technology Stack
 
 ### Backend
+
 - **FastAPI** - High-performance Python web framework
 - **LangChain** - For RAG pipeline and document processing
 - **FAISS** - Facebook's vector database for similarity search
@@ -56,6 +60,7 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 - **ReportLab** - PDF report generation
 
 ### Frontend
+
 - **React 18** - Modern UI library
 - **TypeScript** - Type-safe JavaScript
 - **Vite** - Lightning-fast build tool
@@ -155,6 +160,7 @@ python main.py
 ```
 
 You should see output like:
+
 ```
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process
@@ -201,6 +207,7 @@ npm run dev
 ```
 
 You should see:
+
 ```
   VITE v5.x.x  ready in xxx ms
 
@@ -217,11 +224,13 @@ Open your browser and navigate to `http://localhost:5173`. You'll see the Factor
 **Try these quick tests:**
 
 1. **Upload a Document** 📄
+
    - Go to "Document Manager"
    - Upload a PDF (manual, SOP, policy document)
    - Wait for "Document indexed successfully"
 
 2. **Ask a Question** 💬
+
    - Go to "Chat Assistant"
    - Type: "What are the safety procedures?"
    - Get AI-powered answers with source citations
@@ -265,6 +274,7 @@ Open your browser and navigate to `http://localhost:5173`. You'll see the Factor
 #### Quick Actions
 
 Use suggested prompts for common queries:
+
 - "Ask about procedures"
 - "Generate report"
 - "Analyze data"
@@ -335,12 +345,15 @@ Once your backend is running, explore the full API documentation:
 ### Core Endpoints
 
 #### Health Check
+
 ```http
 GET /health
 ```
+
 Returns system status, document count, and report statistics.
 
 #### Document Management
+
 ```http
 POST /upload/document        # Upload and index a PDF
 GET  /documents              # List all documents
@@ -348,6 +361,7 @@ DELETE /documents/{filename} # Delete a specific document
 ```
 
 #### RAG Query
+
 ```http
 POST /chat/query
 Content-Type: application/json
@@ -360,6 +374,7 @@ Content-Type: application/json
 Returns AI-generated answer with source citations.
 
 #### Report Generation
+
 ```http
 POST /report/generate        # Upload CSV and generate report
 GET  /reports                # List all reports
@@ -377,6 +392,7 @@ DELETE /reports/{report_id}  # Delete a report
 Render offers free hosting with automatic deployments from GitHub!
 
 #### Prerequisites
+
 - GitHub account
 - Render account ([sign up free](https://render.com))
 - Your API keys ready
@@ -384,6 +400,7 @@ Render offers free hosting with automatic deployments from GitHub!
 #### Quick Deploy (Using Blueprint)
 
 1. **Push to GitHub**
+
    ```bash
    git add .
    git commit -m "Prepare for deployment"
@@ -391,14 +408,16 @@ Render offers free hosting with automatic deployments from GitHub!
    ```
 
 2. **Connect to Render**
+
    - Go to [Render Dashboard](https://dashboard.render.com)
    - Click **"New +"** → **"Blueprint"**
    - Connect your GitHub repository
    - Render will detect `render.yaml` automatically
 
 3. **Configure Environment Variables**
-   
+
    In your **Backend Web Service** settings:
+
    ```env
    GROQ_API_KEY=your_groq_api_key
    HUGGINGFACE_API_KEY=your_huggingface_api_key
@@ -406,13 +425,15 @@ Render offers free hosting with automatic deployments from GitHub!
    ```
 
 4. **Add Persistent Storage**
+
    - Go to Backend service → **"Disks"**
    - Add a disk with mount path: `/opt/render/project/src`
    - This ensures your documents persist between deployments
 
 5. **Update Frontend Environment**
-   
+
    In your **Static Site** settings:
+
    ```env
    VITE_API_URL=https://your-backend.onrender.com
    ```
@@ -423,6 +444,7 @@ Render offers free hosting with automatic deployments from GitHub!
    - Backend may sleep after 15 minutes of inactivity (wakes on request)
 
 #### Live URLs
+
 - **Backend:** `https://factorymind-ai-backend.onrender.com`
 - **Frontend:** `https://factorymind-ai.onrender.com`
 
@@ -502,6 +524,7 @@ curl http://localhost:8000/health
 **Problem:** Missing Python dependencies
 
 **Solution:**
+
 ```bash
 pip install -r requirements.txt --upgrade
 ```
@@ -511,6 +534,7 @@ pip install -r requirements.txt --upgrade
 **Problem:** Environment variables not configured
 
 **Solution:**
+
 1. Check that `.env` file exists in project root
 2. Verify it contains your API keys
 3. Restart the backend server
@@ -520,6 +544,7 @@ pip install -r requirements.txt --upgrade
 **Problem:** CORS or connection issues
 
 **Solution:**
+
 1. Verify backend is running: `http://localhost:8000/health`
 2. Check `.env` has correct `ALLOWED_ORIGINS`
 3. Verify `.env.local` has correct `VITE_API_URL`
@@ -530,6 +555,7 @@ pip install -r requirements.txt --upgrade
 **Problem:** Binary wheel compatibility
 
 **Solution:**
+
 ```bash
 pip install faiss-cpu --no-cache-dir
 ```
@@ -541,6 +567,7 @@ pip install faiss-cpu --no-cache-dir
 **Solution:**
 
 For backend (port 8000):
+
 ```bash
 # Find the process
 netstat -ano | findstr :8000
@@ -550,6 +577,7 @@ taskkill /PID <PID> /F
 ```
 
 For frontend (port 5173):
+
 ```bash
 # Find the process
 netstat -ano | findstr :5173
@@ -563,6 +591,7 @@ taskkill /PID <PID> /F
 **Problem:** File exceeds size limit
 
 **Solution:** Update `MAX_FILE_SIZE` in `.env`:
+
 ```env
 MAX_FILE_SIZE=20971520  # 20MB
 ```
@@ -570,11 +599,13 @@ MAX_FILE_SIZE=20971520  # 20MB
 #### ❌ Slow Response Times
 
 **Possible causes:**
+
 - First query after idle time (vector store loading)
 - Large documents being processed
 - Groq API rate limits
 
 **Solutions:**
+
 - Wait for initial load to complete
 - Split large PDFs into smaller chunks
 - Check Groq API usage limits
@@ -618,12 +649,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 ### UI Components
+
 This project uses components from [shadcn/ui](https://ui.shadcn.com/) - Beautiful, accessible UI components built with Radix UI and Tailwind CSS (MIT License).
 
 ### Images
+
 Sample images from [Unsplash](https://unsplash.com) used under their [free license](https://unsplash.com/license).
 
 ### Technologies
+
 - **FastAPI** - Modern Python web framework
 - **LangChain** - Building applications with LLMs
 - **FAISS** - Facebook AI Similarity Search

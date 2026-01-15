@@ -2,83 +2,83 @@
 
 :root {
   --font-size: 16px;
-  
+
   /* FactoryMind AI Light Theme - Warm Professional */
-  --background: #FFF8F2;
-  --foreground: #1F2933;
-  --card: #FFFFFF;
-  --card-foreground: #1F2933;
-  --popover: #FFFFFF;
-  --popover-foreground: #1F2933;
-  --primary: #E76F51;
-  --primary-foreground: #FFFFFF;
+  --background: #fff8f2;
+  --foreground: #1f2933;
+  --card: #ffffff;
+  --card-foreground: #1f2933;
+  --popover: #ffffff;
+  --popover-foreground: #1f2933;
+  --primary: #e76f51;
+  --primary-foreground: #ffffff;
   --secondary: #264653;
-  --secondary-foreground: #FFFFFF;
-  --muted: #F4F4F5;
-  --muted-foreground: #6B7280;
-  --accent: #F4A261;
-  --accent-foreground: #1F2933;
+  --secondary-foreground: #ffffff;
+  --muted: #f4f4f5;
+  --muted-foreground: #6b7280;
+  --accent: #f4a261;
+  --accent-foreground: #1f2933;
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
   --border: rgba(0, 0, 0, 0.15);
   --input: transparent;
-  --input-background: #FFFFFF;
+  --input-background: #ffffff;
   --switch-background: #cbced4;
   --font-weight-medium: 600;
   --font-weight-normal: 400;
-  --ring: #E76F51;
-  --chart-1: #E76F51;
-  --chart-2: #F4A261;
+  --ring: #e76f51;
+  --chart-1: #e76f51;
+  --chart-2: #f4a261;
   --chart-3: #264653;
-  --chart-4: #2A9D8F;
-  --chart-5: #E9C46A;
+  --chart-4: #2a9d8f;
+  --chart-5: #e9c46a;
   --radius: 0.75rem;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1F2933;
-  --sidebar-primary: #E76F51;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #FFF8F2;
-  --sidebar-accent-foreground: #1F2933;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1f2933;
+  --sidebar-primary: #e76f51;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #fff8f2;
+  --sidebar-accent-foreground: #1f2933;
   --sidebar-border: rgba(0, 0, 0, 0.12);
-  --sidebar-ring: #E76F51;
+  --sidebar-ring: #e76f51;
 }
 
 .dark {
   /* FactoryMind AI Dark Theme - Modern Industrial */
-  --background: #0F172A;
-  --foreground: #F8FAFC;
-  --card: #1E293B;
-  --card-foreground: #F8FAFC;
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
-  --primary: #38BDF8;
-  --primary-foreground: #0F172A;
-  --secondary: #F97316;
-  --secondary-foreground: #FFFFFF;
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
+  --primary: #38bdf8;
+  --primary-foreground: #0f172a;
+  --secondary: #f97316;
+  --secondary-foreground: #ffffff;
   --muted: #334155;
-  --muted-foreground: #94A3B8;
-  --accent: #F97316;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
+  --muted-foreground: #94a3b8;
+  --accent: #f97316;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   --border: #334155;
   --input: #334155;
-  --ring: #38BDF8;
+  --ring: #38bdf8;
   --font-weight-medium: 600;
   --font-weight-normal: 400;
-  --chart-1: #38BDF8;
-  --chart-2: #F97316;
-  --chart-3: #10B981;
-  --chart-4: #8B5CF6;
-  --chart-5: #F59E0B;
+  --chart-1: #38bdf8;
+  --chart-2: #f97316;
+  --chart-3: #10b981;
+  --chart-4: #8b5cf6;
+  --chart-5: #f59e0b;
   --sidebar: #111827;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #38BDF8;
-  --sidebar-primary-foreground: #0F172A;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #38bdf8;
+  --sidebar-primary-foreground: #0f172a;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #334155;
-  --sidebar-ring: #38BDF8;
+  --sidebar-ring: #38bdf8;
 }
 
 @theme inline {
@@ -138,7 +138,7 @@
  * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
  */
 @layer base {
-  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
     h1 {
       font-size: var(--text-2xl);
       font-weight: var(--font-weight-medium);

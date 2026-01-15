@@ -47,7 +47,7 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 pl-16 lg:pl-3">
+      <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 pl-16 sm:pl-20 md:pl-24 lg:pl-3">
         {/* Page Title */}
         <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-foreground min-w-fit">
           {title}

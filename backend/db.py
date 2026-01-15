@@ -26,8 +26,8 @@ class HuggingFaceInferenceEmbeddings(Embeddings):
     def __init__(self, api_key: str, model: str = "sentence-transformers/all-MiniLM-L6-v2"):
         self.api_key = api_key
         self.model = model
-        # Using official HuggingFace InferenceClient - token parameter, not api_key
-        self.client = InferenceClient(token=api_key)
+        # Using official HuggingFace InferenceClient with router URL - token parameter, not api_key
+        self.client = InferenceClient(token=api_key, base_url="https://router.huggingface.co/hf-inference/")
     
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """Embed multiple documents using HF Inference API."""
@@ -49,7 +49,7 @@ class HuggingFaceInferenceEmbeddings(Embeddings):
             try:
                 logger.debug(f"Requesting embedding for text (attempt {attempt + 1}/{max_retries})")
                 
-                # Use the official InferenceClient
+                # Use the official InferenceClient - the client automatically uses router.huggingface.co
                 result = self.client.feature_extraction(
                     text,
                     model=self.model

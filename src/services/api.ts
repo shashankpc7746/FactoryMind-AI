@@ -193,6 +193,19 @@ export async function downloadReportPDF(reportId: string): Promise<Blob> {
 }
 
 /**
+ * Delete a report
+ */
+export async function deleteReport(reportId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/reports/${reportId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete report');
+  }
+}
+
+/**
  * Get history (documents and reports)
  */
 export async function getHistory() {

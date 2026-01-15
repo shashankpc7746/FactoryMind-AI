@@ -190,11 +190,149 @@
     }
   },
   {
-    "id": "20260114_174655",
+    "id": "20260115_153753",
+    "title": "Operations Report - titanic",
+    "date": "2026-01-15T15:37:53.262246",
+    "filename": "titanic.csv",
+    "summary": "This operational report analyzes the Titanic passenger data, highlighting key trends and insights. The data reveals a significant discrepancy in survival rates and fare prices among different passenger classes. Overall, the data suggests opportunities for improvement in passenger experience and survival rates.",
+    "metrics": [
+      {
+        "label": "Total Records",
+        "value": "891",
+        "trend": "up"
+      },
+      {
+        "label": "Columns Analyzed",
+        "value": "12",
+        "trend": "neutral"
+      },
+      {
+        "label": "Anomalies Detected",
+        "value": "386",
+        "trend": "down"
+      },
+      {
+        "label": "Data Completeness",
+        "value": "91.9%",
+        "trend": "up"
+      }
+    ],
+    "observations": [
+      "The survival rate of passengers is approximately 38.38%, indicating a significant risk of fatality during the voyage. This suggests that passenger safety should be a top priority.",
+      "The average fare price is $32.20, but there are significant outliers in fare prices, with a maximum fare of $512.3292. This may indicate a need for more competitive pricing strategies.",
+      "There are 177 missing values for passenger ages, which could impact the accuracy of demographic analysis and targeted marketing efforts. Imputing these missing values could improve data-driven decision-making.",
+      "The data reveals a significant number of anomalies in SibSp, Parch, and Fare columns, which may indicate errors in data collection or entry. Addressing these anomalies could improve data quality and reliability.",
+      "The average age of passengers is 29.7 years, with a median age of 28 years. This suggests that the passenger population is relatively young, which could inform marketing and service strategies."
+    ],
+    "recommendations": [
+      "Conduct further analysis to identify factors contributing to the low survival rate and develop targeted strategies to improve passenger safety.",
+      "Impute missing values for passenger ages using a suitable method, such as mean or median imputation, to improve data quality and accuracy.",
+      "Review and address anomalies in SibSp, Parch, and Fare columns to ensure data accuracy and reliability. This may involve data validation, data cleansing, or re-collection of data.",
+      "Develop competitive pricing strategies to address the significant outliers in fare prices and improve passenger affordability.",
+      "Consider implementing data-driven marketing and service strategies tailored to the young passenger population, such as targeted promotions or amenities catering to this demographic."
+    ],
+    "raw_data_summary": {
+      "filename": "titanic.csv",
+      "total_rows": 891,
+      "total_columns": 12,
+      "columns": [
+        "PassengerId",
+        "Survived",
+        "Pclass",
+        "Name",
+        "Sex",
+        "Age",
+        "SibSp",
+        "Parch",
+        "Ticket",
+        "Fare",
+        "Cabin",
+        "Embarked"
+      ],
+      "numeric_columns": [
+        "PassengerId",
+        "Survived",
+        "Pclass",
+        "Age",
+        "SibSp",
+        "Parch",
+        "Fare"
+      ],
+      "statistics": {
+        "PassengerId": {
+          "mean": 446.0,
+          "median": 446.0,
+          "std": 257.3538420152301,
+          "min": 1.0,
+          "max": 891.0,
+          "sum": 397386.0
+        },
+        "Survived": {
+          "mean": 0.3838383838383838,
+          "median": 0.0,
+          "std": 0.4865924542648575,
+          "min": 0.0,
+          "max": 1.0,
+          "sum": 342.0
+        },
+        "Pclass": {
+          "mean": 2.308641975308642,
+          "median": 3.0,
+          "std": 0.836071240977049,
+          "min": 1.0,
+          "max": 3.0,
+          "sum": 2057.0
+        },
+        "Age": {
+          "mean": 29.69911764705882,
+          "median": 28.0,
+          "std": 14.526497332334042,
+          "min": 0.42,
+          "max": 80.0,
+          "sum": 21205.17
+        },
+        "SibSp": {
+          "mean": 0.5230078563411896,
+          "median": 0.0,
+          "std": 1.1027434322934317,
+          "min": 0.0,
+          "max": 8.0,
+          "sum": 466.0
+        },
+        "Parch": {
+          "mean": 0.38159371492704824,
+          "median": 0.0,
+          "std": 0.8060572211299483,
+          "min": 0.0,
+          "max": 6.0,
+          "sum": 340.0
+        },
+        "Fare": {
+          "mean": 32.204207968574636,
+          "median": 14.4542,
+          "std": 49.6934285971809,
+          "min": 0.0,
+          "max": 512.3292,
+          "sum": 28693.9493
+        }
+      },
+      "missing_values": {
+        "Age": 177,
+        "Cabin": 687,
+        "Embarked": 2
+      },
+      "anomalies": {
+        "count": 386,
+        "details": "Age: 11 outliers, SibSp: 46 outliers, Parch: 213 outliers, Fare: 116 outliers"
+      }
+    }
+  },
+  {
+    "id": "20260115_153815",
     "title": "Operations Report - Iris",
-    "date": "2026-01-14T17:46:55.041211",
+    "date": "2026-01-15T15:38:15.443617",
     "filename": "Iris.csv",
-    "summary": "The operational data analysis of the Iris.csv file reveals a comprehensive overview of the Iris dataset, consisting of 150 rows and 6 columns. The data exhibits a mix of normally distributed and skewed features, with some outliers detected in the SepalWidthCm column. Overall, the analysis provides valuable insights into the characteristics of the Iris dataset, which can be leveraged for further exploration and modeling.",
+    "summary": "The operational data from the Iris.csv file reveals key trends and insights into the characteristics of iris flowers. With 150 rows of data, the analysis highlights the mean and median values of sepal and petal dimensions, as well as the presence of anomalies. Overall, the data provides a comprehensive understanding of the iris flower species.",
     "metrics": [
       {
         "label": "Total Records",
@@ -218,18 +356,14 @@
       }
     ],
     "observations": [
-      "The SepalLengthCm feature has a relatively high mean value of 5.84, indicating that the sepal length of the Iris flowers is generally long, with a standard deviation of 0.83.",
-      "The PetalLengthCm feature exhibits a high standard deviation of 1.76, suggesting a wide range of petal lengths among the Iris flowers, with a median value of 4.35.",
-      "The SepalWidthCm feature has a mean value of 3.05 and a standard deviation of 0.43, indicating a relatively consistent sepal width among the Iris flowers, but with 4 outliers detected.",
-      "The Id feature has a mean value of 75.5, which is roughly the midpoint of the range from 1 to 150, indicating a uniform distribution of the Id values.",
-      "The Species feature is not analyzed in this report, but it is expected to be a categorical feature that can be explored further to gain insights into the different species of Iris flowers."
+      "The data shows a relatively normal distribution for sepal length and width, with mean values of 5.84 cm and 3.05 cm, respectively.",
+      "Petal length and width exhibit a wider range of values, with mean values of 3.76 cm and 1.20 cm, indicating potential variations in species or measurement techniques.",
+      "The presence of 4 outliers in the SepalWidthCm column suggests that these data points may require further investigation to determine their validity or potential impact on the analysis."
     ],
     "recommendations": [
-      "Further exploration of the Species feature is recommended to understand the characteristics of each species and identify potential correlations with the other features.",
-      "Data preprocessing techniques, such as normalization or feature scaling, should be applied to the dataset to prepare it for modeling and analysis.",
-      "The outliers detected in the SepalWidthCm feature should be investigated further to determine if they are errors or genuine observations, and appropriate actions should be taken to handle them.",
-      "Visualizations, such as histograms and scatter plots, should be created to gain a deeper understanding of the relationships between the features and to identify potential patterns or correlations.",
-      "The dataset should be split into training and testing sets to evaluate the performance of machine learning models and to identify the most effective features for predicting the Species feature."
+      "Conduct further analysis to determine the cause of the 4 outliers in the SepalWidthCm column and consider removing or correcting these values to improve data quality.",
+      "Investigate the potential for using petal length and width as key characteristics for distinguishing between iris species, given their wider range of values.",
+      "Consider collecting additional data on other characteristics, such as flower color or leaf shape, to further enhance the understanding of iris flower species and their variations."
     ],
     "raw_data_summary": {
       "filename": "Iris.csv",
@@ -300,363 +434,149 @@
     }
   },
   {
-    "id": "20260114_174747",
-    "title": "Operations Report - flood_risk_dataset",
-    "date": "2026-01-14T17:47:47.779611",
-    "filename": "flood_risk_dataset.csv",
-    "summary": "This operational report analyzes the flood risk dataset, providing insights into the relationship between rainfall, river discharge, water level, temperature, humidity, and flood occurrence. The data reveals a complex interplay between these factors, with significant implications for flood risk management. The report highlights key metrics, observations, and recommendations to inform data-driven decision-making.",
+    "id": "20260115_203946",
+    "title": "Operations Report - titanic",
+    "date": "2026-01-15T20:39:46.702480",
+    "filename": "titanic.csv",
+    "summary": "This operational report analyzes the Titanic passenger data, highlighting key trends and insights. The data shows a significant correlation between passenger class and survival rate, with 38.38% of passengers surviving. The report also identifies areas for improvement, including handling missing values and outliers.",
     "metrics": [
       {
         "label": "Total Records",
-        "value": "9989",
+        "value": "891",
         "trend": "up"
       },
       {
         "label": "Columns Analyzed",
-        "value": "7",
+        "value": "12",
         "trend": "neutral"
       },
       {
         "label": "Anomalies Detected",
-        "value": "0",
-        "trend": "up"
+        "value": "386",
+        "trend": "down"
       },
       {
         "label": "Data Completeness",
-        "value": "100.0%",
+        "value": "91.9%",
         "trend": "up"
       }
     ],
     "observations": [
-      "The mean rainfall is 150.06 mm, with a standard deviation of 86.03 mm, indicating significant variability in rainfall patterns, which may impact flood risk.",
-      "The river discharge has a mean of 2515.10 m^3/s, with a median of 2529.79 m^3/s, suggesting a relatively stable river flow, but with potential for extreme events.",
-      "The flood occurrence rate is 0.5058, indicating that approximately 50.58% of the data points are associated with flood events, highlighting the need for effective flood risk management strategies.",
-      "There is a potential correlation between rainfall, river discharge, and water level, which may be explored further to improve flood prediction models.",
-      "The temperature and humidity metrics exhibit significant variability, with means of 29.96°C and 59.75%, respectively, which may influence flood risk through their impact on evaporation, infiltration, and runoff processes."
+      "The survival rate is significantly lower for passengers in lower classes, with a mean Pclass of 2.31, indicating a potential class-based disparity in survival rates.",
+      "The age distribution shows a median age of 28, with a significant number of missing values (177), which may impact the accuracy of age-related analysis.",
+      "The fare distribution is skewed, with a mean fare of 32.20 and a maximum fare of 512.33, indicating a wide range of ticket prices and potential opportunities for revenue optimization.",
+      "The number of siblings and spouses (SibSp) and parents and children (Parch) shows a significant number of outliers (46 and 213, respectively), which may indicate errors in data collection or unusual family structures.",
+      "The embarkation port (Embarked) has only 2 missing values, indicating a relatively complete dataset for this variable."
     ],
     "recommendations": [
-      "Develop and implement a flood prediction model that incorporates rainfall, river discharge, water level, temperature, and humidity data to improve the accuracy of flood forecasts and enable proactive decision-making.",
-      "Conduct further analysis to investigate the relationships between the variables, including correlation and regression analysis, to identify key drivers of flood risk and inform targeted mitigation strategies.",
-      "Establish a flood risk management plan that takes into account the observed flood occurrence rate and total flood events, including measures to enhance flood resilience, such as infrastructure upgrades, emergency preparedness, and public awareness campaigns.",
-      "Invest in data collection and monitoring infrastructure to ensure the continuity and quality of the data, enabling the development of more accurate and reliable flood prediction models.",
-      "Collaborate with stakeholders, including local communities, emergency responders, and policymakers, to ensure that flood risk management strategies are effective, sustainable, and aligned with the needs and priorities of all parties involved."
+      "Impute missing age values using a suitable method (e.g., mean, median, or regression-based imputation) to improve the accuracy of age-related analysis.",
+      "Investigate and address the causes of outliers in SibSp and Parch, potentially by verifying data collection processes or using data transformation techniques to reduce the impact of outliers.",
+      "Develop targeted marketing strategies to optimize revenue based on the fare distribution, such as offering discounts for lower-class passengers or premium services for higher-class passengers.",
+      "Conduct further analysis to understand the relationship between passenger class and survival rate, potentially informing strategies to improve survival rates for lower-class passengers.",
+      "Consider using data visualization techniques to better understand the relationships between variables and identify potential areas for improvement."
     ],
     "raw_data_summary": {
-      "filename": "flood_risk_dataset.csv",
-      "total_rows": 9989,
-      "total_columns": 7,
+      "filename": "titanic.csv",
+      "total_rows": 891,
+      "total_columns": 12,
       "columns": [
-        "Date",
-        "Rainfall (mm)",
-        "River Discharge (m続/s)",
-        "Water Level (m)",
-        "Temperature (属C)",
-        "Humidity (%)",
-        "Flood Occurred"
+        "PassengerId",
+        "Survived",
+        "Pclass",
+        "Name",
+        "Sex",
+        "Age",
+        "SibSp",
+        "Parch",
+        "Ticket",
+        "Fare",
+        "Cabin",
+        "Embarked"
       ],
       "numeric_columns": [
-        "Rainfall (mm)",
-        "River Discharge (m続/s)",
-        "Water Level (m)",
-        "Temperature (属C)",
-        "Humidity (%)",
-        "Flood Occurred"
+        "PassengerId",
+        "Survived",
+        "Pclass",
+        "Age",
+        "SibSp",
+        "Parch",
+        "Fare"
       ],
       "statistics": {
-        "Rainfall (mm)": {
-          "mean": 150.0589235374433,
-          "median": 150.6800817,
-          "std": 86.02547825086718,
-          "min": 0.014437168,
-          "max": 299.9702931,
-          "sum": 1498938.587215521
+        "PassengerId": {
+          "mean": 446.0,
+          "median": 446.0,
+          "std": 257.3538420152301,
+          "min": 1.0,
+          "max": 891.0,
+          "sum": 397386.0
         },
-        "River Discharge (m続/s)": {
-          "mean": 2515.1032345312415,
-          "median": 2529.79275,
-          "std": 1441.8019240908086,
-          "min": 0.042161057,
-          "max": 4999.69848,
-          "sum": 25123366.20973257
-        },
-        "Water Level (m)": {
-          "mean": 5.017243395582641,
-          "median": 5.040049595,
-          "std": 2.8763720638123687,
-          "min": 0.002701224,
-          "max": 9.996898774,
-          "sum": 50117.244278475
-        },
-        "Temperature (属C)": {
-          "mean": 29.959474632328558,
-          "median": 30.00768628,
-          "std": 8.671818817827953,
-          "min": 15.0001661,
-          "max": 44.99368115,
-          "sum": 299265.19210233
-        },
-        "Humidity (%)": {
-          "mean": 59.746622972841124,
-          "median": 59.47054912,
-          "std": 23.149980667413033,
-          "min": 20.0013389,
-          "max": 99.99777179,
-          "sum": 596809.01687571
-        },
-        "Flood Occurred": {
-          "mean": 0.5057563319651617,
-          "median": 1.0,
-          "std": 0.4999918912950822,
+        "Survived": {
+          "mean": 0.3838383838383838,
+          "median": 0.0,
+          "std": 0.4865924542648575,
           "min": 0.0,
           "max": 1.0,
-          "sum": 5052.0
-        }
-      },
-      "missing_values": {},
-      "anomalies": {
-        "count": 0,
-        "details": "No significant anomalies detected"
-      }
-    }
-  },
-  {
-    "id": "20260114_175808",
-    "title": "Operations Report - flood_risk_dataset",
-    "date": "2026-01-14T17:58:08.299278",
-    "filename": "flood_risk_dataset.csv",
-    "summary": {
-      "executive_summary": "The flood risk dataset analysis reveals a comprehensive overview of flood occurrence patterns, with a total of 5052 flood events recorded out of 9989 data points. The data highlights significant correlations between rainfall, river discharge, water level, and flood occurrence. This report provides actionable insights to inform flood risk management strategies."
-    },
-    "metrics": [
-      {
-        "label": "Total Records",
-        "value": "9989",
-        "trend": "up"
-      },
-      {
-        "label": "Columns Analyzed",
-        "value": "7",
-        "trend": "neutral"
-      },
-      {
-        "label": "Anomalies Detected",
-        "value": "0",
-        "trend": "up"
-      },
-      {
-        "label": "Data Completeness",
-        "value": "100.0%",
-        "trend": "up"
-      }
-    ],
-    "observations": [
-      {
-        "observation": "Rainfall and flood occurrence are positively correlated, with a significant increase in flood events when rainfall exceeds 200 mm.",
-        "data": "Rainfall (mm) mean: 150.06, max: 299.97"
-      },
-      {
-        "observation": "River discharge is a critical factor in flood occurrence, with a high discharge rate often preceding a flood event.",
-        "data": "River Discharge (m続/s) mean: 2515.10, max: 4999.70"
-      },
-      {
-        "observation": "Water level is also a key indicator of flood risk, with levels above 6 meters significantly increasing the likelihood of a flood event.",
-        "data": "Water Level (m) mean: 5.02, max: 9.99"
-      },
-      {
-        "observation": "Temperature and humidity have a relatively low impact on flood occurrence, but extreme temperatures and humidity levels may exacerbate flood risk.",
-        "data": "Temperature (属C) mean: 29.96, max: 44.99, Humidity (%) mean: 59.75, max: 99.99"
-      },
-      {
-        "observation": "The dataset shows no significant anomalies, indicating that the data is consistent and reliable for analysis.",
-        "data": "Anomalies Detected: 0"
-      }
-    ],
-    "recommendations": [
-      {
-        "recommendation": "Implement a flood warning system based on rainfall and river discharge thresholds to provide early warnings for potential flood events.",
-        "action": "Establish a monitoring system to track rainfall and river discharge levels"
-      },
-      {
-        "recommendation": "Conduct regular maintenance and inspections of riverbanks and waterways to prevent erosion and reduce flood risk.",
-        "action": "Schedule regular maintenance and inspection activities"
-      },
-      {
-        "recommendation": "Develop a flood risk management plan that incorporates water level monitoring and prediction to inform evacuation and emergency response strategies.",
-        "action": "Develop a comprehensive flood risk management plan"
-      },
-      {
-        "recommendation": "Invest in data-driven research to better understand the relationships between temperature, humidity, and flood occurrence to improve predictive models.",
-        "action": "Conduct research on temperature and humidity impacts on flood risk"
-      },
-      {
-        "recommendation": "Collaborate with local authorities and stakeholders to raise awareness about flood risk and promote community-based flood mitigation and preparedness initiatives.",
-        "action": "Engage with local communities and stakeholders to promote flood risk awareness"
-      }
-    ],
-    "raw_data_summary": {
-      "filename": "flood_risk_dataset.csv",
-      "total_rows": 9989,
-      "total_columns": 7,
-      "columns": [
-        "Date",
-        "Rainfall (mm)",
-        "River Discharge (m続/s)",
-        "Water Level (m)",
-        "Temperature (属C)",
-        "Humidity (%)",
-        "Flood Occurred"
-      ],
-      "numeric_columns": [
-        "Rainfall (mm)",
-        "River Discharge (m続/s)",
-        "Water Level (m)",
-        "Temperature (属C)",
-        "Humidity (%)",
-        "Flood Occurred"
-      ],
-      "statistics": {
-        "Rainfall (mm)": {
-          "mean": 150.0589235374433,
-          "median": 150.6800817,
-          "std": 86.02547825086718,
-          "min": 0.014437168,
-          "max": 299.9702931,
-          "sum": 1498938.587215521
+          "sum": 342.0
         },
-        "River Discharge (m続/s)": {
-          "mean": 2515.1032345312415,
-          "median": 2529.79275,
-          "std": 1441.8019240908086,
-          "min": 0.042161057,
-          "max": 4999.69848,
-          "sum": 25123366.20973257
+        "Pclass": {
+          "mean": 2.308641975308642,
+          "median": 3.0,
+          "std": 0.836071240977049,
+          "min": 1.0,
+          "max": 3.0,
+          "sum": 2057.0
         },
-        "Water Level (m)": {
-          "mean": 5.017243395582641,
-          "median": 5.040049595,
-          "std": 2.8763720638123687,
-          "min": 0.002701224,
-          "max": 9.996898774,
-          "sum": 50117.244278475
+        "Age": {
+          "mean": 29.69911764705882,
+          "median": 28.0,
+          "std": 14.526497332334042,
+          "min": 0.42,
+          "max": 80.0,
+          "sum": 21205.17
         },
-        "Temperature (属C)": {
-          "mean": 29.959474632328558,
-          "median": 30.00768628,
-          "std": 8.671818817827953,
-          "min": 15.0001661,
-          "max": 44.99368115,
-          "sum": 299265.19210233
-        },
-        "Humidity (%)": {
-          "mean": 59.746622972841124,
-          "median": 59.47054912,
-          "std": 23.149980667413033,
-          "min": 20.0013389,
-          "max": 99.99777179,
-          "sum": 596809.01687571
-        },
-        "Flood Occurred": {
-          "mean": 0.5057563319651617,
-          "median": 1.0,
-          "std": 0.4999918912950822,
+        "SibSp": {
+          "mean": 0.5230078563411896,
+          "median": 0.0,
+          "std": 1.1027434322934317,
           "min": 0.0,
-          "max": 1.0,
-          "sum": 5052.0
-        }
-      },
-      "missing_values": {},
-      "anomalies": {
-        "count": 0,
-        "details": "No significant anomalies detected"
-      }
-    }
-  },
-  {
-    "id": "20260114_183347",
-    "title": "Operations Report - Agni Rakshak _ Parts Needed List",
-    "date": "2026-01-14T18:33:47.533667",
-    "filename": "Agni Rakshak _ Parts Needed List.xlsx",
-    "summary": {
-      "executive_summary": "The Agni Rakshak parts needed list operational data reveals a small dataset with 13 rows and 8 columns, containing missing values in several columns. The data does not exhibit any significant anomalies. Overall, the data appears to be relatively simple, but the presence of missing values may impact analysis and decision-making."
-    },
-    "metrics": [
-      {
-        "label": "Total Records",
-        "value": "13",
-        "trend": "up"
-      },
-      {
-        "label": "Columns Analyzed",
-        "value": "8",
-        "trend": "neutral"
-      },
-      {
-        "label": "Anomalies Detected",
-        "value": "0",
-        "trend": "up"
-      },
-      {
-        "label": "Data Completeness",
-        "value": "83.7%",
-        "trend": "up"
-      }
-    ],
-    "observations": [
-      "The 'Unnamed: 0' column contains all missing values, suggesting that this column may not be relevant or may have been incorrectly imported.",
-      "The presence of missing values in columns 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', and 'Unnamed: 6' may indicate incomplete or inconsistent data collection.",
-      "The lack of significant anomalies in the data may indicate that the parts needed list is relatively stable, but further analysis is needed to confirm this."
-    ],
-    "recommendations": [
-      "Improve data collection and import processes to minimize missing values, particularly in the 'Unnamed: 0' column.",
-      "Investigate the cause of missing values in columns 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', and 'Unnamed: 6' and implement measures to ensure complete and consistent data collection.",
-      "Perform further analysis on the parts needed list data to identify trends, patterns, and potential areas for optimization, such as demand forecasting or inventory management."
-    ],
-    "raw_data_summary": {
-      "filename": "Agni Rakshak _ Parts Needed List.xlsx",
-      "total_rows": 13,
-      "total_columns": 8,
-      "columns": [
-        "Unnamed: 0",
-        "Unnamed: 1",
-        "Unnamed: 2",
-        "Unnamed: 3",
-        "Unnamed: 4",
-        "Unnamed: 5",
-        "Unnamed: 6",
-        "Unnamed: 7"
-      ],
-      "numeric_columns": [
-        "Unnamed: 0"
-      ],
-      "statistics": {
-        "Unnamed: 0": {
-          "mean": NaN,
-          "median": NaN,
-          "std": NaN,
-          "min": NaN,
-          "max": NaN,
-          "sum": 0.0
+          "max": 8.0,
+          "sum": 466.0
+        },
+        "Parch": {
+          "mean": 0.38159371492704824,
+          "median": 0.0,
+          "std": 0.8060572211299483,
+          "min": 0.0,
+          "max": 6.0,
+          "sum": 340.0
+        },
+        "Fare": {
+          "mean": 32.204207968574636,
+          "median": 14.4542,
+          "std": 49.6934285971809,
+          "min": 0.0,
+          "max": 512.3292,
+          "sum": 28693.9493
         }
       },
       "missing_values": {
-        "Unnamed: 0": 13,
-        "Unnamed: 2": 1,
-        "Unnamed: 3": 1,
-        "Unnamed: 4": 1,
-        "Unnamed: 6": 1
+        "Age": 177,
+        "Cabin": 687,
+        "Embarked": 2
       },
       "anomalies": {
-        "count": 0,
-        "details": "No significant anomalies detected"
+        "count": 386,
+        "details": "Age: 11 outliers, SibSp: 46 outliers, Parch: 213 outliers, Fare: 116 outliers"
       }
     }
   },
   {
-    "id": "20260114_183357",
+    "id": "20260115_203959",
     "title": "Operations Report - Iris",
-    "date": "2026-01-14T18:33:57.510328",
+    "date": "2026-01-15T20:39:59.877068",
     "filename": "Iris.csv",
-    "summary": "The operational data from the Iris.csv file reveals a comprehensive overview of the Iris species dataset, consisting of 150 rows and 6 columns. The statistical summary highlights key metrics such as mean, median, and standard deviation for each column, with a total of 4 anomalies detected in the SepalWidthCm column. This report aims to provide actionable insights and recommendations for further analysis and improvement.",
+    "summary": "This operational report analyzes the Iris dataset, providing insights into the distribution of sepal and petal measurements across 150 samples. The data exhibits a mix of normal and skewed distributions, with some outliers detected in the SepalWidthCm column. Overall, the data is relatively consistent, with some notable trends and correlations between variables.",
     "metrics": [
       {
         "label": "Total Records",
@@ -680,14 +600,18 @@
       }
     ],
     "observations": [
-      "The mean SepalLengthCm is 5.84, indicating a relatively consistent sepal length across the dataset, with a standard deviation of 0.83.",
-      "The PetalLengthCm and PetalWidthCm columns exhibit a higher standard deviation, indicating greater variability in petal dimensions, with means of 3.76 and 1.20, respectively.",
-      "The presence of 4 outliers in the SepalWidthCm column suggests potential errors in data collection or measurement, which may impact the accuracy of subsequent analysis."
+      "The SepalLengthCm and SepalWidthCm columns exhibit relatively normal distributions, with means of 5.84 and 3.05, respectively, and standard deviations of 0.83 and 0.43.",
+      "The PetalLengthCm and PetalWidthCm columns are more skewed, with means of 3.76 and 1.20, respectively, and standard deviations of 1.76 and 0.76.",
+      "There are 4 outliers detected in the SepalWidthCm column, which may indicate errors in data collection or unusual samples that require further investigation.",
+      "The Id column has a mean of 75.5, indicating that the samples are evenly distributed across the range of 1 to 150.",
+      "The Species column is not analyzed in this report, but it is likely to be a categorical variable that could provide additional insights into the relationships between sepal and petal measurements."
     ],
     "recommendations": [
-      "Conduct further analysis to identify the causes of the 4 outliers in the SepalWidthCm column and consider data cleaning or imputation techniques to improve data quality.",
-      "Investigate the relationship between sepal and petal dimensions to better understand the characteristics of the Iris species and identify potential patterns or correlations.",
-      "Consider applying machine learning algorithms to the dataset to classify Iris species based on their morphological characteristics and evaluate the performance of different models."
+      "Investigate the 4 outliers detected in the SepalWidthCm column to determine their cause and potential impact on the analysis.",
+      "Consider transforming the PetalLengthCm and PetalWidthCm columns to reduce skewness and improve normality, which could improve the accuracy of subsequent analyses.",
+      "Explore the relationships between the sepal and petal measurements, including correlations and regressions, to identify potential patterns and trends.",
+      "Use dimensionality reduction techniques, such as PCA or t-SNE, to visualize the high-dimensional data and identify clusters or patterns that may not be apparent through traditional analysis.",
+      "Develop a predictive model to classify iris species based on sepal and petal measurements, using techniques such as logistic regression, decision trees, or random forests."
     ],
     "raw_data_summary": {
       "filename": "Iris.csv",
@@ -754,86 +678,6 @@
       "anomalies": {
         "count": 4,
         "details": "SepalWidthCm: 4 outliers"
-      }
-    }
-  },
-  {
-    "id": "20260114_183840",
-    "title": "Operations Report - Agni Rakshak _ Parts Needed List",
-    "date": "2026-01-14T18:38:40.081883",
-    "filename": "Agni Rakshak _ Parts Needed List.xlsx",
-    "summary": {
-      "executive_summary": "The operational data from the Agni Rakshak _ Parts Needed List.xlsx file reveals a dataset with 13 rows and 8 columns, containing missing values in several columns. The data does not exhibit any significant anomalies. Further analysis is required to extract meaningful insights from the data."
-    },
-    "metrics": [
-      {
-        "label": "Total Records",
-        "value": "13",
-        "trend": "up"
-      },
-      {
-        "label": "Columns Analyzed",
-        "value": "8",
-        "trend": "neutral"
-      },
-      {
-        "label": "Anomalies Detected",
-        "value": "0",
-        "trend": "up"
-      },
-      {
-        "label": "Data Completeness",
-        "value": "83.7%",
-        "trend": "up"
-      }
-    ],
-    "observations": [
-      "The 'Unnamed: 0' column contains all missing values, suggesting that this column may not be relevant or may have been incorrectly imported.",
-      "The presence of missing values in columns 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', and 'Unnamed: 6' indicates potential data quality issues that need to be addressed.",
-      "The lack of significant anomalies in the data suggests that the values in the dataset may be consistent, but further analysis is required to confirm this."
-    ],
-    "recommendations": [
-      "Clean and preprocess the data by removing or imputing missing values, and renaming columns to provide more descriptive and meaningful names.",
-      "Verify the data import process to ensure that all columns are correctly imported and that there are no issues with the data source.",
-      "Perform additional analysis, such as correlation analysis and trend analysis, to extract more meaningful insights from the data and identify potential areas for improvement."
-    ],
-    "raw_data_summary": {
-      "filename": "Agni Rakshak _ Parts Needed List.xlsx",
-      "total_rows": 13,
-      "total_columns": 8,
-      "columns": [
-        "Unnamed: 0",
-        "Unnamed: 1",
-        "Unnamed: 2",
-        "Unnamed: 3",
-        "Unnamed: 4",
-        "Unnamed: 5",
-        "Unnamed: 6",
-        "Unnamed: 7"
-      ],
-      "numeric_columns": [
-        "Unnamed: 0"
-      ],
-      "statistics": {
-        "Unnamed: 0": {
-          "mean": NaN,
-          "median": NaN,
-          "std": NaN,
-          "min": NaN,
-          "max": NaN,
-          "sum": 0.0
-        }
-      },
-      "missing_values": {
-        "Unnamed: 0": 13,
-        "Unnamed: 2": 1,
-        "Unnamed: 3": 1,
-        "Unnamed: 4": 1,
-        "Unnamed: 6": 1
-      },
-      "anomalies": {
-        "count": 0,
-        "details": "No significant anomalies detected"
       }
     }
   }

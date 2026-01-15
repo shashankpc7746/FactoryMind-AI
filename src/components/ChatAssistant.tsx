@@ -6,6 +6,7 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import * as api from '../services/api';
+import logoImage from '../images/FactoryMind-AI.png';
 
 interface Message {
   id: string;
@@ -161,8 +162,14 @@ export function ChatAssistant() {
               }`}
             >
               {message.role === 'assistant' && (
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary-foreground font-bold text-xs sm:text-sm">FM</span>
+                <div 
+                  className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full border-2 flex items-center justify-center flex-shrink-0 p-1 sm:p-1.5"
+                  style={{ 
+                    backgroundColor: '#101010',
+                    borderColor: '#000000'
+                  }}
+                >
+                  <img src={logoImage} alt="FactoryMind AI" className="w-full h-full object-contain" />
                 </div>
               )}
 
@@ -229,8 +236,14 @@ export function ChatAssistant() {
 
           {isTyping && (
             <div className="flex gap-3 sm:gap-4">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                <span className="text-primary-foreground font-bold text-xs sm:text-sm">FM</span>
+              <div 
+                className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full border-2 flex items-center justify-center flex-shrink-0 p-1 sm:p-1.5"
+                style={{ 
+                  backgroundColor: '#101010',
+                  borderColor: '#000000'
+                }}
+              >
+                <img src={logoImage} alt="FactoryMind AI" className="w-full h-full object-contain" />
               </div>
               <Card className="p-3 sm:p-4 bg-card">
                 <div className="flex gap-1.5 sm:gap-2">
@@ -250,14 +263,14 @@ export function ChatAssistant() {
       <div className="border-t border-border bg-card/50 backdrop-blur">
         <div className="max-w-4xl mx-auto p-3 sm:p-4 lg:p-6">
           {/* Suggested Actions */}
-          <div className="mb-3 sm:mb-4 flex flex-wrap gap-2">
+          <div className="mb-3 sm:mb-4 flex flex-wrap gap-1.5 sm:gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() =>
                 setInput('What are the quality control procedures for product assembly?')
               }
-              className="text-xs sm:text-sm"
+              className="text-[10px] sm:text-xs md:text-sm px-2 py-1 sm:px-3 sm:py-2"
             >
               Ask about procedures
             </Button>
@@ -265,7 +278,7 @@ export function ChatAssistant() {
               variant="outline"
               size="sm"
               onClick={() => setInput('Generate a production efficiency report')}
-              className="text-xs sm:text-sm"
+              className="text-[10px] sm:text-xs md:text-sm px-2 py-1 sm:px-3 sm:py-2"
             >
               Generate report
             </Button>
@@ -273,14 +286,14 @@ export function ChatAssistant() {
               variant="outline"
               size="sm"
               onClick={() => setInput('Analyze safety incident trends')}
-              className="text-xs sm:text-sm"
+              className="text-[10px] sm:text-xs md:text-sm px-2 py-1 sm:px-3 sm:py-2"
             >
               Analyze data
             </Button>
           </div>
 
           {/* Input Box */}
-          <div className="flex gap-2 sm:gap-3">
+          <div className="flex gap-1.5 sm:gap-2 md:gap-3">
             <input
               ref={fileInputRef}
               type="file"
@@ -293,10 +306,10 @@ export function ChatAssistant() {
               variant="outline"
               size="icon"
               onClick={() => fileInputRef.current?.click()}
-              className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12"
+              className="flex-shrink-0 h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12"
               aria-label="Attach file"
             >
-              <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Paperclip className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
             </Button>
 
             <div className="flex-1 relative">
@@ -309,8 +322,8 @@ export function ChatAssistant() {
                     handleSend();
                   }
                 }}
-                placeholder="Ask about procedures, request reports, or analyze data..."
-                className="resize-none pr-10 sm:pr-12 min-h-[40px] sm:min-h-[48px] text-sm sm:text-base"
+                placeholder="Ask any Question..."
+                className="resize-none pr-9 sm:pr-10 md:pr-12 min-h-[36px] sm:min-h-[40px] md:min-h-[48px] text-xs sm:text-sm md:text-base"
                 rows={1}
               />
             </div>
@@ -318,15 +331,15 @@ export function ChatAssistant() {
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isTyping}
-              className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12"
+              className="flex-shrink-0 h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12"
               size="icon"
               aria-label="Send message"
             >
-              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
             </Button>
           </div>
 
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-2 sm:mt-3 text-center">
+          <p className="hidden lg:block text-xs text-muted-foreground mt-3 text-center">
             Press Enter to send, Shift+Enter for new line
           </p>
         </div>

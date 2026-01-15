@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, FileSpreadsheet, Download, Eye, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, Download, Eye, TrendingUp, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -36,7 +36,18 @@ export function ReportGenerator() {
       const response = await api.listReports();
       // Handle both direct array and nested structure
       const reportsList = response.reports || response.data || response || [];
-      setReports(Array.isArray(reportsList) ? reportsList : []);
+      const reportsArray = Array.isArray(reportsList) ? reportsList : [];
+      
+      // Sort by date (most recent first) and limit to 10
+      const sortedReports = reportsArray
+        .sort((a, b) => {
+          const dateA = new Date(a.date || 0).getTime();
+          const dateB = new Date(b.date || 0).getTime();
+          return dateB - dateA; // Descending order (recent first)
+        })
+        .slice(0, 10); // Limit to 10 reports
+      
+      setReports(sortedReports);
     } catch (error) {
       console.error('Error loading reports:', error);
       setReports([]);
@@ -102,6 +113,26 @@ export function ReportGenerator() {
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast.error(`Failed to download PDF: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'pdf' });
+    }
+  };
+
+  const handleDelete = async (reportId: string) => {
+    if (!window.confirm('Are you sure you want to delete this report?')) {
+      return;
+    }
+    
+    try {
+      await api.deleteReport(reportId);
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+      toast.success('Report deleted successfully');
+      
+      // Close dialog if the deleted report was open
+      if (selectedReport?.id === reportId) {
+        setSelectedReport(null);
+      }
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      toast.error(`Failed to delete report: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -224,6 +255,15 @@ export function ReportGenerator() {
                 >
                   <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
                   Download PDF
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(report.id)}
+                  className="text-xs sm:text-sm w-full sm:w-auto"
+                  size="sm"
+                >
+                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
+                  Delete
                 </Button>
               </div>
             </div>

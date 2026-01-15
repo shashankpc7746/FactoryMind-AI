@@ -273,6 +273,34 @@ class ReportEngine:
                 return report
         return None
     
+    def delete_report(self, report_id: str):
+        """
+        Delete a report by ID.
+        
+        Args:
+            report_id: Report identifier
+            
+        Raises:
+            ValueError: If report not found
+        """
+        # Find report in cache
+        report_to_delete = None
+        for report in self.reports_cache:
+            if report['id'] == report_id:
+                report_to_delete = report
+                break
+        
+        if not report_to_delete:
+            raise ValueError(f"Report with ID {report_id} not found")
+        
+        # Remove from cache
+        self.reports_cache = [r for r in self.reports_cache if r['id'] != report_id]
+        
+        # Update metadata file
+        self._save_reports_to_disk()
+        
+        logger.info(f"Deleted report: {report_id}")
+    
     def _load_reports_from_disk(self):
         """Load existing reports from disk on startup."""
         try:

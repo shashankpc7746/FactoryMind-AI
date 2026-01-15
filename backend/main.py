@@ -473,6 +473,27 @@ async def download_report_pdf(report_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.delete("/reports/{report_id}")
+async def delete_report(report_id: str):
+    """
+    Delete a report by ID.
+    
+    Args:
+        report_id: Report identifier
+        
+    Returns:
+        Success message
+    """
+    try:
+        report_engine.delete_report(report_id)
+        return {"message": "Report deleted successfully", "report_id": report_id}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error deleting report: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 # HISTORY
 # ============================================================================

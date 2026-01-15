@@ -21,7 +21,8 @@ export function History() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await fetch('http://localhost:8000/history');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/history`);
         const data = await response.json();
         
         const items: HistoryItem[] = [];
@@ -72,9 +73,9 @@ export function History() {
   );
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       {/* Search */}
-      <Card className="p-4">
+      <Card className="p-3 sm:p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -97,50 +98,50 @@ export function History() {
         {filteredHistory.map((item) => (
           <Card
             key={item.id}
-            className="p-5 hover:shadow-md transition-all cursor-pointer group"
+            className="p-3 sm:p-4 md:p-5 hover:shadow-md transition-all cursor-pointer group"
           >
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
               {/* Icon */}
               <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                   item.type === 'chat'
                     ? 'bg-primary/10 text-primary'
                     : 'bg-accent/20 text-accent'
                 }`}
               >
                 {item.type === 'chat' ? (
-                  <MessageSquare className="w-5 h-5" />
+                  <MessageSquare className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
                 ) : (
-                  <FileText className="w-5 h-5" />
+                  <FileText className="w-4 h-4 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
                 )}
               </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <h4 className="font-semibold group-hover:text-primary transition-colors">
+                <div className="flex items-start justify-between gap-2 sm:gap-3 md:gap-4 mb-1.5 sm:mb-2">
+                  <h4 className="font-semibold group-hover:text-primary transition-colors text-sm sm:text-base truncate break-all">
                     {item.title}
                   </h4>
-                  <Badge variant={item.type === 'chat' ? 'default' : 'secondary'}>
+                  <Badge variant={item.type === 'chat' ? 'default' : 'secondary'} className="flex-shrink-0 text-[10px] sm:text-xs">
                     {item.type === 'chat' ? 'Chat' : 'Report'}
                   </Badge>
                 </div>
 
-                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3 line-clamp-2 break-words">
                   {item.preview}
                 </p>
 
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
+                  <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                    <span className="truncate">
                       {item.date.toLocaleDateString()} at {item.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline-flex"
                   >
                     View Details
                   </Button>

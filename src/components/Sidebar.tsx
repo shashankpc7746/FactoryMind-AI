@@ -2,6 +2,7 @@ import { MessageSquare, FileText, BarChart3, History, Settings, Moon, Sun, Menu,
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useState } from 'react';
+import logoImage from '../images/FactoryMind-AI.png';
 
 interface SidebarProps {
   currentPage: string;
@@ -27,20 +28,22 @@ export function Sidebar({ currentPage, onNavigate, theme, onToggleTheme, userNam
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="lg:hidden fixed top-3 left-3 z-50 p-2.5 rounded-lg bg-card border border-border shadow-lg"
-        aria-label="Toggle menu"
-      >
-        {isCollapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
-      </button>
+      {/* Mobile Menu Button - Only shows when sidebar is closed */}
+      {isCollapsed && (
+        <button
+          onClick={() => setIsCollapsed(false)}
+          className="lg:hidden fixed top-3 left-3 z-50 p-2.5 rounded-lg bg-card border border-border shadow-lg"
+          aria-label="Open menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      )}
 
       {/* Sidebar */}
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-40
-          w-64 xl:w-72 bg-sidebar border-r border-sidebar-border
+          w-72 md:w-80 lg:w-72 xl:w-80 bg-sidebar border-r border-sidebar-border
           flex flex-col
           transition-transform duration-300 ease-in-out
           ${isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'}
@@ -48,13 +51,30 @@ export function Sidebar({ currentPage, onNavigate, theme, onToggleTheme, userNam
       >
         {/* Logo */}
         <div className="p-4 sm:p-5 lg:p-6 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-              <span className="text-primary-foreground font-bold text-base sm:text-lg">FM</span>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div 
+                className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center flex-shrink-0 p-1"
+                style={{ 
+                  backgroundColor: '#101010',
+                  borderColor: '#000000'
+                }}
+              >
+                <img src={logoImage} alt="FactoryMind AI" className="w-full h-full object-contain" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-lg font-bold text-sidebar-foreground">FactoryMind AI</h1>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold text-sidebar-foreground truncate">FactoryMind AI</h1>
-            </div>
+            
+            {/* Close button for mobile - positioned at top right */}
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="lg:hidden p-2 rounded-lg hover:bg-sidebar-accent flex-shrink-0"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 

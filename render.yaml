@@ -27,7 +27,7 @@ services:
     runtime: static
     branch: main
     buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    staticPublishPath: ./build
     envVars:
       - key: VITE_API_URL
         value: https://factorymind-ai-backend.onrender.com # Update after backend is deployed

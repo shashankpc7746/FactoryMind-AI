@@ -448,7 +448,6 @@ Render offers free hosting with automatic deployments from GitHub!
 - **Backend:** `https://factorymind-ai-backend.onrender.com`
 - **Frontend:** `https://factorymind-ai.onrender.com`
 
-For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ---
 
@@ -673,24 +672,15 @@ Sample images from [Unsplash](https://unsplash.com) used under their [free licen
 
 ### Need Help?
 
-- 📖 Check the [QUICKSTART.md](./QUICKSTART.md) for step-by-step setup
 - 🐛 Found a bug? [Open an issue](https://github.com/shashankpc7746/FactoryMind-AI/issues)
 - 💬 Have questions? Start a [discussion](https://github.com/shashankpc7746/FactoryMind-AI/discussions)
-- 📧 Contact: [Your Email]
+- 📧 Contact: [shashankgupta7746@gmail.com]
 
-### Useful Resources
-
-- [API Testing Guide](./API_TESTING_GUIDE.md) - Test backend endpoints
-- [Deployment Guide](./DEPLOYMENT.md) - Deploy to production
-- [Backend API Docs](http://localhost:8000/docs) - Interactive API documentation
-
----
 
 ## 🚀 What's Next?
 
 Exciting features coming soon:
 
-- 📱 Mobile app versions
 - 🔐 User authentication and role-based access
 - 📊 Advanced analytics dashboard
 - 🌍 Multi-language support
@@ -708,8 +698,8 @@ If you find FactoryMind AI helpful, please give it a star! It helps others disco
 
 <div align="center">
 
-**Built with ❤️ by the FactoryMind Team**
+**Built with ❤️ by the Shashank**
 
-[🌐 Live Demo](https://factorymind-ai.onrender.com) • [📖 Documentation](./QUICKSTART.md) • [🐛 Report Bug](https://github.com/shashankpc7746/FactoryMind-AI/issues) • [✨ Request Feature](https://github.com/shashankpc7746/FactoryMind-AI/issues)
+[🌐 Live Demo](https://factorymind-ai.onrender.com) • [🐛 Report Bug](https://github.com/shashankpc7746/FactoryMind-AI/issues) • [✨ Request Feature](https://github.com/shashankpc7746/FactoryMind-AI/issues)
 
 </div>

@@ -33,24 +33,15 @@ class VectorDBHandler:
         self.vector_store_path = Path(vector_store_path)
         self.vector_store_path.mkdir(parents=True, exist_ok=True)
         
-        # Use local sentence-transformers model (no API needed!)
-        logger.info("Loading local sentence-transformers model...")
-        try:
-            self.embeddings = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-MiniLM-L6-v2",
-                model_kwargs={"device": "cpu"},
-                cache_folder="./hf_cache"
-            )
-            logger.info("Successfully loaded sentence-transformers model")
-        except Exception as e:
-            logger.error(f"Error loading embeddings model: {e}")
-            raise
+        # LAZY LOADING: Don't load model at startup to avoid timeout
+        # Model will be loaded on first use (first document upload)
+        self.embeddings = None
+        self._embeddings_loaded = False
         
         self.vector_store = None
         self.metadata_file = self.vector_store_path / "metadata.pkl"
         
-        # Try to load existing vector store
-        self._load_vector_store()
+        logger.info("VectorDBHandler initialized (model will load on first use)")
     
     def _load_vector_store(self):
         """Load existing FAISS vector store if available."""
@@ -79,6 +70,9 @@ class VectorDBHandler:
             documents: List of LangChain Document objects with page_content and metadata
         """
         try:
+            # Ensure embeddings model is loaded (lazy loading)
+            self._ensure_embeddings_loaded()
+            
             # Filter out empty documents
             valid_documents = [
                 doc for doc in documents 
@@ -130,6 +124,9 @@ class VectorDBHandler:
         Returns:
             List of tuples (content, metadata, score)
         """
+        # Ensure embeddings model is loaded (needed for query embedding)
+        self._ensure_embeddings_loaded()
+        
         if self.vector_store is None:
             logger.warning("Vector store is empty")
             return []

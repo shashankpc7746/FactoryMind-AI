@@ -13,73 +13,10 @@ import numpy as np
 
 from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
-from langchain.embeddings.base import Embeddings
-from huggingface_hub import InferenceClient
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class HuggingFaceInferenceEmbeddings(Embeddings):
-    """HuggingFace Inference API embeddings using InferenceClient - FREE, no local model needed!"""
-    
-    def __init__(self, api_key: str, model: str = "sentence-transformers/all-MiniLM-L6-v2"):
-        self.api_key = api_key
-        self.model = model
-        # Using official HuggingFace InferenceClient - token parameter, not api_key
-        self.client = InferenceClient(token=api_key)
-    
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        """Embed multiple documents using HF Inference API."""
-        embeddings = []
-        for text in texts:
-            embedding = self._get_embedding(text)
-            embeddings.append(embedding)
-            time.sleep(0.1)  # Rate limiting for free tier
-        return embeddings
-    
-    def embed_query(self, text: str) -> List[float]:
-        """Embed a single query using HF Inference API."""
-        return self._get_embedding(text)
-    
-    def _get_embedding(self, text: str) -> List[float]:
-        """Get embedding from HuggingFace Inference API using InferenceClient."""
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                logger.debug(f"Requesting embedding for text (attempt {attempt + 1}/{max_retries})")
-                
-                # Use the official InferenceClient - the client automatically uses router.huggingface.co
-                result = self.client.feature_extraction(
-                    text,
-                    model=self.model
-                )
-                
-                # Convert numpy array to list if needed
-                if isinstance(result, np.ndarray):
-                    embedding = result.tolist()
-                    logger.debug(f"Got embedding with dimension {len(embedding)}")
-                    return embedding
-                elif isinstance(result, list):
-                    if len(result) > 0 and isinstance(result[0], list):
-                        # Assuming first element is the embedding for the input text
-                        logger.debug(f"Got embedding with dimension {len(result[0])}")
-                        return result[0]
-                    else:
-                        logger.debug(f"Got embedding with dimension {len(result)}")
-                        return result
-                else:
-                    logger.warning(f"Unexpected result type: {type(result)}")
-                    raise ValueError(f"Unexpected result type: {type(result)}")
-                    
-            except Exception as e:
-                logger.error(f"Embedding error (attempt {attempt + 1}/{max_retries}): {e}")
-                if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)  # Exponential backoff
-                else:
-                    raise ValueError(f"Failed to get embedding after {max_retries} attempts: {e}")
-        
-        raise ValueError("Failed to get embedding after multiple retries")
 
 
 class VectorDBHandler:
@@ -91,19 +28,24 @@ class VectorDBHandler:
         
         Args:
             vector_store_path: Path to store FAISS index
-            hf_api_key: HuggingFace API key for embeddings
+            hf_api_key: HuggingFace API key (not used - kept for compatibility)
         """
         self.vector_store_path = Path(vector_store_path)
         self.vector_store_path.mkdir(parents=True, exist_ok=True)
         
-        # Use HuggingFace Inference API (FREE, no PyTorch needed!)
-        if not hf_api_key:
-            raise ValueError("HuggingFace API key is required. Get one free at: https://huggingface.co/settings/tokens")
+        # Use local sentence-transformers model (no API needed!)
+        logger.info("Loading local sentence-transformers model...")
+        try:
+            self.embeddings = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/all-MiniLM-L6-v2",
+                model_kwargs={"device": "cpu"},
+                cache_folder="./hf_cache"
+            )
+            logger.info("Successfully loaded sentence-transformers model")
+        except Exception as e:
+            logger.error(f"Error loading embeddings model: {e}")
+            raise
         
-        self.embeddings = HuggingFaceInferenceEmbeddings(
-            api_key=hf_api_key,
-            model="sentence-transformers/all-MiniLM-L6-v2"
-        )
         self.vector_store = None
         self.metadata_file = self.vector_store_path / "metadata.pkl"
         
@@ -137,14 +79,25 @@ class VectorDBHandler:
             documents: List of LangChain Document objects with page_content and metadata
         """
         try:
+            # Filter out empty documents
+            valid_documents = [
+                doc for doc in documents 
+                if doc.page_content and doc.page_content.strip()
+            ]
+            
+            if not valid_documents:
+                raise ValueError("No valid text content found in documents. The PDF may be scanned images or have encoding issues.")
+            
+            logger.info(f"Processing {len(valid_documents)} valid documents (filtered from {len(documents)} total)")
+            
             if self.vector_store is None:
                 # Create new vector store
-                self.vector_store = FAISS.from_documents(documents, self.embeddings)
-                logger.info(f"Created new vector store with {len(documents)} documents")
+                self.vector_store = FAISS.from_documents(valid_documents, self.embeddings)
+                logger.info(f"Created new vector store with {len(valid_documents)} documents")
             else:
                 # Add to existing vector store
-                self.vector_store.add_documents(documents)
-                logger.info(f"Added {len(documents)} documents to existing vector store")
+                self.vector_store.add_documents(valid_documents)
+                logger.info(f"Added {len(valid_documents)} documents to existing vector store")
             
             # Save the updated vector store
             self._save_vector_store()

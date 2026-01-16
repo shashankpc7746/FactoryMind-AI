@@ -15,6 +15,11 @@ import math
 # Load environment variables from parent directory
 load_dotenv(Path(__file__).parent.parent / '.env')
 
+# Set timeouts for model downloads BEFORE any imports
+os.environ['HF_HUB_DOWNLOAD_TIMEOUT'] = '600'  # 10 minutes for model download
+os.environ['REQUESTS_TIMEOUT'] = '600'
+os.environ['HF_HUB_ETAG_TIMEOUT'] = '600'
+
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse

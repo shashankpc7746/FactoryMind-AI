@@ -12,9 +12,9 @@ httpx==0.27.0  # Pin to version compatible with groq
 langchain==0.1.16
 langchain-community==0.0.38
 requests==2.31.0
-huggingface-hub==0.20.3  # For HuggingFace Inference API
+huggingface-hub==0.20.3  # For downloading models
+sentence-transformers==2.2.2  # For local embeddings (no API needed!)
 # langchain-openai==0.0.8  # Replaced with Groq (free)
-# sentence-transformers - NO LONGER NEEDED! Using HF Inference API instead
 
 # Vector Database
 faiss-cpu==1.9.0.post1  # Updated for Python 3.10+ compatibility
@@ -37,3 +37,7 @@ reportlab==4.0.9
 python-dotenv==1.0.1
 pydantic==2.6.1
 pydantic-settings==2.1.0
+
+# PyTorch (CPU-only for embeddings)
+torch==2.9.1  # Latest stable
+torchvision==0.24.1  # Required by sentence-transformers

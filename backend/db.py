@@ -43,6 +43,27 @@ class VectorDBHandler:
         
         logger.info("VectorDBHandler initialized (model will load on first use)")
     
+    def _ensure_embeddings_loaded(self):
+        """Lazy load embeddings model on first use."""
+        if self._embeddings_loaded:
+            return
+        
+        logger.info("Loading sentence-transformers model (first use)...")
+        try:
+            self.embeddings = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/all-MiniLM-L6-v2",
+                model_kwargs={"device": "cpu"},
+                cache_folder="./hf_cache"
+            )
+            self._embeddings_loaded = True
+            logger.info("Successfully loaded sentence-transformers model")
+            
+            # Now try to load existing vector store if it exists
+            self._load_vector_store()
+        except Exception as e:
+            logger.error(f"Error loading embeddings model: {e}")
+            raise
+    
     def _load_vector_store(self):
         """Load existing FAISS vector store if available."""
         index_path = self.vector_store_path / "index.faiss"

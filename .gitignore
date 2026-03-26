@@ -8,6 +8,10 @@ venv/
 env/
 ENV/
 .venv
+fact-ai/
+
+# HuggingFace model cache
+backend/hf_cache/
 *.egg-info/
 dist/
 build/

@@ -11,9 +11,21 @@ import logging
 import time
 import numpy as np
 
-from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
-from langchain_community.embeddings import HuggingFaceEmbeddings
+
+# Lazy imports - loaded on first use to avoid DLL issues at startup
+FAISS = None
+HuggingFaceEmbeddings = None
+
+def _ensure_faiss_loaded():
+    """Lazy load FAISS and HuggingFaceEmbeddings."""
+    global FAISS, HuggingFaceEmbeddings
+    if FAISS is None:
+        from langchain_community.vectorstores import FAISS as _FAISS
+        FAISS = _FAISS
+    if HuggingFaceEmbeddings is None:
+        from langchain_community.embeddings import HuggingFaceEmbeddings as _HFE
+        HuggingFaceEmbeddings = _HFE
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,6 +60,7 @@ class VectorDBHandler:
         if self._embeddings_loaded:
             return
         
+        _ensure_faiss_loaded()
         logger.info("Loading sentence-transformers model (first use)...")
         try:
             self.embeddings = HuggingFaceEmbeddings(

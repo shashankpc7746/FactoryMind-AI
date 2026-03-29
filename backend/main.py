@@ -121,6 +121,7 @@ class ReportResponse(BaseModel):
     metrics: List[dict]
     observations: List[Union[str, dict]]
     recommendations: List[Union[str, dict]]
+    charts: Optional[List[dict]] = None
 
 
 # ============================================================================

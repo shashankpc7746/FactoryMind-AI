@@ -91,6 +91,9 @@ class ReportEngine:
             # Anomaly detection (simple outlier detection using IQR method)
             anomalies = self._detect_anomalies(df, numeric_cols)
             
+            # Generate chart-ready data for visual analytics
+            charts = self._generate_chart_data(df, numeric_cols, columns)
+            
             summary = {
                 'filename': filename,
                 'total_rows': total_rows,
@@ -99,7 +102,8 @@ class ReportEngine:
                 'numeric_columns': list(numeric_cols),
                 'statistics': statistics,
                 'missing_values': missing_values,
-                'anomalies': anomalies
+                'anomalies': anomalies,
+                'charts': charts
             }
             
             logger.info(f"Analysis complete: {total_rows} rows, {total_columns} columns")
@@ -108,6 +112,215 @@ class ReportEngine:
         except Exception as e:
             logger.error(f"Error analyzing data file: {str(e)}")
             raise
+    
+    def _generate_chart_data(self, df: pd.DataFrame, numeric_cols, all_columns) -> List[Dict]:
+        """
+        Generate chart-ready data structures for visual analytics.
+        
+        Args:
+            df: DataFrame
+            numeric_cols: List of numeric column names
+            all_columns: All column names
+            
+        Returns:
+            List of chart descriptor dicts
+        """
+        charts = []
+        
+        try:
+            # 1. Distribution charts for numeric columns (bar charts) — max 4
+            charts.extend(self._generate_distribution_charts(df, numeric_cols))
+            
+            # 2. Category breakdown charts (pie charts)
+            charts.extend(self._generate_category_charts(df, all_columns, numeric_cols))
+            
+            # 3. Time-series / trend chart (line chart)
+            time_chart = self._generate_time_series_chart(df, numeric_cols)
+            if time_chart:
+                charts.append(time_chart)
+            
+            # 4. Correlation heatmap (if enough numeric cols)
+            corr_chart = self._generate_correlation_chart(df, numeric_cols)
+            if corr_chart:
+                charts.append(corr_chart)
+            
+        except Exception as e:
+            logger.warning(f"Error generating chart data: {str(e)}")
+        
+        # Cap at 8 charts max
+        return charts[:8]
+    
+    def _generate_distribution_charts(self, df: pd.DataFrame, numeric_cols) -> List[Dict]:
+        """Generate histogram / distribution bar charts for numeric columns."""
+        charts = []
+        # Pick up to 4 most interesting numeric columns (highest variance)
+        cols_with_var = []
+        for col in numeric_cols:
+            try:
+                variance = df[col].var()
+                if pd.notna(variance):
+                    cols_with_var.append((col, variance))
+            except Exception:
+                pass
+        
+        cols_with_var.sort(key=lambda x: x[1], reverse=True)
+        selected_cols = [c[0] for c in cols_with_var[:4]]
+        
+        for col in selected_cols:
+            try:
+                col_data = df[col].dropna()
+                if len(col_data) < 2:
+                    continue
+                
+                # Compute histogram bins
+                num_bins = min(10, len(col_data.unique()))
+                if num_bins < 2:
+                    continue
+                
+                counts, bin_edges = np.histogram(col_data, bins=num_bins)
+                data = []
+                for i in range(len(counts)):
+                    low = round(float(bin_edges[i]), 2)
+                    high = round(float(bin_edges[i + 1]), 2)
+                    data.append({
+                        "name": f"{low}-{high}",
+                        "value": int(counts[i])
+                    })
+                
+                charts.append({
+                    "type": "bar",
+                    "title": f"{col} Distribution",
+                    "data": data,
+                    "xKey": "name",
+                    "yKey": "value",
+                    "color": "#6366f1"
+                })
+            except Exception as e:
+                logger.warning(f"Error generating distribution for {col}: {str(e)}")
+        
+        return charts
+    
+    def _generate_category_charts(self, df: pd.DataFrame, all_columns, numeric_cols) -> List[Dict]:
+        """Generate pie charts for categorical columns."""
+        charts = []
+        categorical_cols = [c for c in all_columns if c not in numeric_cols]
+        
+        # Define a palette for pie slices
+        pie_colors = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"]
+        
+        for col in categorical_cols[:2]:  # Max 2 pie charts
+            try:
+                value_counts = df[col].value_counts().head(8)  # Top 8 categories
+                if len(value_counts) < 2:
+                    continue
+                
+                data = []
+                for i, (name, count) in enumerate(value_counts.items()):
+                    data.append({
+                        "name": str(name),
+                        "value": int(count),
+                        "color": pie_colors[i % len(pie_colors)]
+                    })
+                
+                charts.append({
+                    "type": "pie",
+                    "title": f"{col} Breakdown",
+                    "data": data
+                })
+            except Exception as e:
+                logger.warning(f"Error generating category chart for {col}: {str(e)}")
+        
+        return charts
+    
+    def _generate_time_series_chart(self, df: pd.DataFrame, numeric_cols) -> Dict:
+        """Generate line chart if a date/time column exists."""
+        try:
+            # Try to find a date column
+            date_col = None
+            for col in df.columns:
+                col_lower = col.lower()
+                if any(keyword in col_lower for keyword in ['date', 'time', 'timestamp', 'day', 'month', 'year']):
+                    try:
+                        pd.to_datetime(df[col])
+                        date_col = col
+                        break
+                    except Exception:
+                        continue
+            
+            if not date_col:
+                # Try to auto-detect by parsing
+                for col in df.columns:
+                    if df[col].dtype == 'object':
+                        try:
+                            pd.to_datetime(df[col])
+                            date_col = col
+                            break
+                        except Exception:
+                            continue
+            
+            if not date_col or len(numeric_cols) == 0:
+                return None
+            
+            # Sort by date and select up to 3 numeric columns for the trend
+            df_sorted = df.copy()
+            df_sorted[date_col] = pd.to_datetime(df_sorted[date_col])
+            df_sorted = df_sorted.sort_values(date_col)
+            
+            # If too many rows, aggregate by date
+            if len(df_sorted) > 50:
+                df_sorted = df_sorted.groupby(date_col).mean(numeric_only=True).reset_index()
+            
+            # Pick up to 3 numeric columns
+            trend_cols = list(numeric_cols[:3])
+            
+            data = []
+            for _, row in df_sorted.iterrows():
+                point = {"date": str(row[date_col].strftime('%Y-%m-%d') if hasattr(row[date_col], 'strftime') else row[date_col])}
+                for tc in trend_cols:
+                    val = row.get(tc)
+                    point[tc] = round(float(val), 2) if pd.notna(val) else None
+                data.append(point)
+            
+            line_colors = ["#6366f1", "#10b981", "#f59e0b"]
+            
+            return {
+                "type": "line",
+                "title": "Trends Over Time",
+                "data": data,
+                "xKey": "date",
+                "lines": [{"key": tc, "color": line_colors[i % len(line_colors)]} for i, tc in enumerate(trend_cols)]
+            }
+        except Exception as e:
+            logger.warning(f"Error generating time-series chart: {str(e)}")
+            return None
+    
+    def _generate_correlation_chart(self, df: pd.DataFrame, numeric_cols) -> Dict:
+        """Generate correlation matrix data."""
+        try:
+            if len(numeric_cols) < 2 or len(numeric_cols) > 15:
+                return None
+            
+            corr_matrix = df[numeric_cols].corr()
+            columns = list(numeric_cols)
+            
+            data = []
+            for row_col in columns:
+                row_data = {}
+                row_data["column"] = row_col
+                for col_col in columns:
+                    val = corr_matrix.loc[row_col, col_col]
+                    row_data[col_col] = round(float(val), 3) if pd.notna(val) else None
+                data.append(row_data)
+            
+            return {
+                "type": "heatmap",
+                "title": "Correlation Matrix",
+                "columns": columns,
+                "data": data
+            }
+        except Exception as e:
+            logger.warning(f"Error generating correlation chart: {str(e)}")
+            return None
     
     def _detect_anomalies(self, df: pd.DataFrame, numeric_cols) -> Dict:
         """
@@ -182,6 +395,7 @@ class ReportEngine:
                 'metrics': self._format_metrics(data_summary, report_content),
                 'observations': report_content.get('observations', []),
                 'recommendations': report_content.get('recommendations', []),
+                'charts': data_summary.get('charts', []),
                 'raw_data_summary': data_summary
             }
             

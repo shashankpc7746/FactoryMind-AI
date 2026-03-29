@@ -22,6 +22,7 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 
 - **Data Analysis** - Upload CSV/Excel files for instant insights
 - **AI-Powered Insights** - Automatically generates executive summaries
+- **Visual Analytics** - Interactive charts: bar distributions, line trends, pie breakdowns, and correlation heatmaps
 - **Anomaly Detection** - Identifies outliers and patterns using statistical methods
 - **Professional Reports** - Export beautifully formatted PDF reports
 - **Key Metrics Dashboard** - Visual representation of trends and KPIs
@@ -294,6 +295,7 @@ Click the **paperclip icon** to attach PDFs or CSVs directly in the chat for imm
 5. Review the generated report with:
    - Executive summary
    - Key metrics and trends
+   - **Interactive visual charts** (bar, line, pie, correlation heatmap)
    - Statistical observations
    - Data-driven recommendations
 
@@ -504,12 +506,11 @@ npm run build
 ### Running Tests
 
 ```bash
-# Test backend API
-python test_upload.py
-python test_history.py
-
 # Check backend health
 curl http://localhost:8000/health
+
+# Test the API interactively
+# Visit http://localhost:8000/docs for Swagger UI
 ```
 
 ---
@@ -682,7 +683,7 @@ Sample images from [Unsplash](https://unsplash.com) used under their [free licen
 Exciting features coming soon:
 
 - 🔐 User authentication and role-based access
-- 📊 Advanced analytics dashboard
+- ✅ ~~Advanced analytics dashboard~~ — **Shipped!** Interactive charts in reports
 - 🌍 Multi-language support
 - 🔗 Integration with popular tools (Slack, Teams, etc.)
 - 📧 Email notifications and scheduled reports

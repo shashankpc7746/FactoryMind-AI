@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, FileSpreadsheet, Download, Eye, TrendingUp, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, Download, Eye, TrendingUp, AlertCircle, CheckCircle2, Trash2, BarChart3 } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -7,6 +7,21 @@ import { Progress } from './ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { toast } from 'sonner';
 import * as api from '../services/api';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell, Legend
+} from 'recharts';
+
+interface ChartDescriptor {
+  type: 'bar' | 'line' | 'pie' | 'heatmap';
+  title: string;
+  data: any[];
+  xKey?: string;
+  yKey?: string;
+  color?: string;
+  lines?: Array<{ key: string; color: string }>;
+  columns?: string[];
+}
 
 interface Report {
   id: string;
@@ -16,7 +31,211 @@ interface Report {
   metrics: Array<{ label: string; value: string; trend?: 'up' | 'down' | 'neutral' }>;
   observations: Array<string | { observation?: string }>;
   recommendations: Array<string | { recommendation?: string }>;
+  charts?: ChartDescriptor[];
 }
+
+// ============================================================================
+// Chart sub-components
+// ============================================================================
+
+function ReportBarChart({ chart }: { chart: ChartDescriptor }) {
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <BarChart data={chart.data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <XAxis
+          dataKey={chart.xKey || 'name'}
+          tick={{ fontSize: 10 }}
+          tickLine={false}
+          axisLine={{ stroke: 'hsl(var(--border))' }}
+          interval={0}
+          angle={-30}
+          textAnchor="end"
+          height={50}
+        />
+        <YAxis
+          tick={{ fontSize: 11 }}
+          tickLine={false}
+          axisLine={{ stroke: 'hsl(var(--border))' }}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '8px',
+            fontSize: '12px',
+          }}
+        />
+        <Bar
+          dataKey={chart.yKey || 'value'}
+          fill={chart.color || '#6366f1'}
+          radius={[4, 4, 0, 0]}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+function ReportLineChart({ chart }: { chart: ChartDescriptor }) {
+  const lines = chart.lines || [];
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <LineChart data={chart.data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <XAxis
+          dataKey={chart.xKey || 'date'}
+          tick={{ fontSize: 10 }}
+          tickLine={false}
+          axisLine={{ stroke: 'hsl(var(--border))' }}
+        />
+        <YAxis
+          tick={{ fontSize: 11 }}
+          tickLine={false}
+          axisLine={{ stroke: 'hsl(var(--border))' }}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '8px',
+            fontSize: '12px',
+          }}
+        />
+        <Legend wrapperStyle={{ fontSize: '11px' }} />
+        {lines.map((line, idx) => (
+          <Line
+            key={idx}
+            type="monotone"
+            dataKey={line.key}
+            stroke={line.color}
+            strokeWidth={2}
+            dot={{ r: 3 }}
+            activeDot={{ r: 5 }}
+          />
+        ))}
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+function ReportPieChart({ chart }: { chart: ChartDescriptor }) {
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <PieChart>
+        <Pie
+          data={chart.data}
+          cx="50%"
+          cy="50%"
+          innerRadius={50}
+          outerRadius={90}
+          paddingAngle={3}
+          dataKey="value"
+          nameKey="name"
+          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          labelLine={false}
+          style={{ fontSize: '11px' }}
+        >
+          {chart.data.map((entry: any, idx: number) => (
+            <Cell key={idx} fill={entry.color || '#6366f1'} />
+          ))}
+        </Pie>
+        <Tooltip
+          contentStyle={{
+            backgroundColor: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '8px',
+            fontSize: '12px',
+          }}
+        />
+        <Legend wrapperStyle={{ fontSize: '11px' }} />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+function CorrelationHeatmap({ chart }: { chart: ChartDescriptor }) {
+  const columns = chart.columns || [];
+  const data = chart.data || [];
+
+  const getColor = (val: number | null) => {
+    if (val === null || val === undefined) return 'transparent';
+    // -1 (red) -> 0 (neutral) -> +1 (green)
+    const abs = Math.abs(val);
+    if (val > 0) {
+      return `rgba(16, 185, 129, ${abs * 0.7 + 0.1})`;  // green
+    } else {
+      return `rgba(239, 68, 68, ${abs * 0.7 + 0.1})`;   // red
+    }
+  };
+
+  // Abbreviate long column names
+  const abbrev = (name: string) => {
+    if (name.length <= 12) return name;
+    return name.slice(0, 10) + '…';
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[10px] sm:text-xs border-collapse">
+        <thead>
+          <tr>
+            <th className="p-1.5 text-left font-medium text-muted-foreground border border-border bg-muted/30"></th>
+            {columns.map((col) => (
+              <th
+                key={col}
+                className="p-1.5 font-medium text-muted-foreground border border-border bg-muted/30 text-center"
+                title={col}
+              >
+                {abbrev(col)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row: any, rIdx: number) => (
+            <tr key={rIdx}>
+              <td className="p-1.5 font-medium text-muted-foreground border border-border bg-muted/30 whitespace-nowrap" title={row.column}>
+                {abbrev(row.column)}
+              </td>
+              {columns.map((col) => {
+                const val = row[col];
+                return (
+                  <td
+                    key={col}
+                    className="p-1.5 text-center border border-border font-mono"
+                    style={{ backgroundColor: getColor(val) }}
+                    title={`${row.column} × ${col}: ${val}`}
+                  >
+                    {val !== null && val !== undefined ? val.toFixed(2) : '-'}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ChartCard({ chart }: { chart: ChartDescriptor }) {
+  return (
+    <Card className="p-3 sm:p-4">
+      <h4 className="text-xs sm:text-sm font-semibold mb-3 flex items-center gap-2 text-muted-foreground">
+        <BarChart3 className="w-3.5 h-3.5" />
+        {chart.title}
+      </h4>
+      {chart.type === 'bar' && <ReportBarChart chart={chart} />}
+      {chart.type === 'line' && <ReportLineChart chart={chart} />}
+      {chart.type === 'pie' && <ReportPieChart chart={chart} />}
+      {chart.type === 'heatmap' && <CorrelationHeatmap chart={chart} />}
+    </Card>
+  );
+}
+
+// ============================================================================
+// Main component
+// ============================================================================
 
 export function ReportGenerator() {
   const [reports, setReports] = useState<Report[]>([]);
@@ -136,6 +355,10 @@ export function ReportGenerator() {
     }
   };
 
+  const hasCharts = (report: Report) => {
+    return report.charts && Array.isArray(report.charts) && report.charts.length > 0;
+  };
+
   return (
     <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
       {/* Upload Card */}
@@ -149,7 +372,7 @@ export function ReportGenerator() {
           
           <h3 className="text-base sm:text-lg font-semibold mb-1.5 sm:mb-2">Upload Data File</h3>
           <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 px-2">
-            Upload CSV or Excel files to generate automated reports
+            Upload CSV or Excel files to generate automated reports with visual analytics
           </p>
           
           <Button
@@ -208,10 +431,18 @@ export function ReportGenerator() {
                     Generated on {report.date ? new Date(report.date).toLocaleDateString() : 'Unknown date'}
                   </p>
                 </div>
-                <Badge variant="secondary" className="text-[10px] sm:text-xs flex-shrink-0">
-                  <FileSpreadsheet className="w-3 h-3 mr-1" />
-                  Report
-                </Badge>
+                <div className="flex gap-2 flex-shrink-0">
+                  {hasCharts(report) && (
+                    <Badge variant="secondary" className="text-[10px] sm:text-xs bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20">
+                      <BarChart3 className="w-3 h-3 mr-1" />
+                      {report.charts!.length} Charts
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="text-[10px] sm:text-xs">
+                    <FileSpreadsheet className="w-3 h-3 mr-1" />
+                    Report
+                  </Badge>
+                </div>
               </div>
 
               <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">{summaryText}</p>
@@ -284,7 +515,7 @@ export function ReportGenerator() {
 
       {/* Full Report View Dialog */}
       <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg">{selectedReport?.title || 'Report'}</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">
@@ -319,6 +550,21 @@ export function ReportGenerator() {
                         )}
                       </div>
                     </Card>
+                  ))}
+                </div>
+              </div>
+              )}
+
+              {/* ====== Visual Analytics Section ====== */}
+              {hasCharts(selectedReport) && (
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
+                  <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  Visual Analytics
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {selectedReport.charts!.map((chart, idx) => (
+                    <ChartCard key={idx} chart={chart} />
                   ))}
                 </div>
               </div>

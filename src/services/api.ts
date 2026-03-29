@@ -37,6 +37,16 @@ export interface Report {
   }>;
   observations: Array<string | { observation?: string }>;
   recommendations: Array<string | { recommendation?: string }>;
+  charts?: Array<{
+    type: 'bar' | 'line' | 'pie' | 'heatmap';
+    title: string;
+    data: any[];
+    xKey?: string;
+    yKey?: string;
+    color?: string;
+    lines?: Array<{ key: string; color: string }>;
+    columns?: string[];
+  }>;
 }
 
 export interface Document {

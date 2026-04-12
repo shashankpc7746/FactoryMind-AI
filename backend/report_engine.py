@@ -201,32 +201,66 @@ class ReportEngine:
         return charts
     
     def _generate_category_charts(self, df: pd.DataFrame, all_columns, numeric_cols) -> List[Dict]:
-        """Generate pie charts for categorical columns."""
+        """Generate charts for categorical columns. Uses pie for few categories, bar for many."""
         charts = []
         categorical_cols = [c for c in all_columns if c not in numeric_cols]
         
-        # Define a palette for pie slices
-        pie_colors = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"]
+        # Define a palette for slices/bars
+        chart_colors = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"]
         
-        for col in categorical_cols[:2]:  # Max 2 pie charts
+        for col in categorical_cols[:2]:  # Max 2 category charts
             try:
-                value_counts = df[col].value_counts().head(8)  # Top 8 categories
-                if len(value_counts) < 2:
+                num_unique = df[col].nunique()
+                # Skip columns with too many unique values (e.g. IDs) or too few
+                if num_unique < 2 or num_unique > 50:
                     continue
                 
-                data = []
-                for i, (name, count) in enumerate(value_counts.items()):
-                    data.append({
-                        "name": str(name),
-                        "value": int(count),
-                        "color": pie_colors[i % len(pie_colors)]
-                    })
+                value_counts = df[col].value_counts()
                 
-                charts.append({
-                    "type": "pie",
-                    "title": f"{col} Breakdown",
-                    "data": data
-                })
+                # Truncate long names helper
+                def truncate_name(name, max_len=25):
+                    s = str(name)
+                    return s[:max_len] + '…' if len(s) > max_len else s
+                
+                # Decide chart type based on number of categories
+                if num_unique <= 6:
+                    # Pie chart — few categories
+                    top = value_counts.head(6)
+                    data = []
+                    for i, (name, count) in enumerate(top.items()):
+                        data.append({
+                            "name": truncate_name(name),
+                            "value": int(count),
+                            "color": chart_colors[i % len(chart_colors)]
+                        })
+                    # If there are remaining values, group as "Other"
+                    remaining = value_counts.iloc[6:].sum() if len(value_counts) > 6 else 0
+                    if remaining > 0:
+                        data.append({"name": "Other", "value": int(remaining), "color": "#94a3b8"})
+                    
+                    charts.append({
+                        "type": "pie",
+                        "title": f"{col} Breakdown",
+                        "data": data
+                    })
+                else:
+                    # Bar chart — many categories, show top 10
+                    top = value_counts.head(10)
+                    data = []
+                    for name, count in top.items():
+                        data.append({
+                            "name": truncate_name(name, 20),
+                            "value": int(count)
+                        })
+                    
+                    charts.append({
+                        "type": "bar",
+                        "title": f"Top {col} Categories",
+                        "data": data,
+                        "xKey": "name",
+                        "yKey": "value",
+                        "color": "#8b5cf6"
+                    })
             except Exception as e:
                 logger.warning(f"Error generating category chart for {col}: {str(e)}")
         
@@ -550,7 +584,7 @@ class ReportEngine:
     
     def export_report_to_pdf(self, report_id: str, output_path: str) -> str:
         """
-        Export report to PDF format.
+        Export report to PDF format with embedded charts.
         
         Args:
             report_id: Report identifier
@@ -560,10 +594,10 @@ class ReportEngine:
             Path to generated PDF
         """
         try:
-            from reportlab.lib.pagesizes import letter, A4
+            from reportlab.lib.pagesizes import letter
             from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
             from reportlab.lib.units import inch
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
             from reportlab.lib import colors
             
             report = self.get_report_by_id(report_id)
@@ -594,50 +628,224 @@ class ReportEngine:
             elements.append(Spacer(1, 0.3*inch))
             
             # Summary
+            summary_text = report.get('summary', '')
+            if isinstance(summary_text, dict):
+                summary_text = summary_text.get('executive_summary', str(summary_text))
             elements.append(Paragraph("<b>Executive Summary</b>", styles['Heading2']))
-            elements.append(Paragraph(report['summary'], styles['Normal']))
+            elements.append(Paragraph(str(summary_text), styles['Normal']))
             elements.append(Spacer(1, 0.3*inch))
             
             # Metrics Table
             elements.append(Paragraph("<b>Key Metrics</b>", styles['Heading2']))
             metric_data = [['Metric', 'Value']]
-            for metric in report['metrics']:
-                metric_data.append([metric['label'], metric['value']])
+            for metric in report.get('metrics', []):
+                metric_data.append([metric.get('label', ''), metric.get('value', '')])
             
             metric_table = Table(metric_data, colWidths=[3*inch, 2*inch])
             metric_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a365d')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('TOPPADDING', (0, 0), (-1, 0), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f0f4f8')),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e1')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#f0f4f8'), colors.white]),
             ]))
             elements.append(metric_table)
             elements.append(Spacer(1, 0.3*inch))
             
+            # ---- Visual Analytics Charts ----
+            charts = report.get('charts', [])
+            if charts:
+                elements.append(Paragraph("<b>Visual Analytics</b>", styles['Heading2']))
+                elements.append(Spacer(1, 0.15*inch))
+                
+                chart_images = self._render_charts_to_images(charts, output_path, report_id)
+                for img_path, chart_title in chart_images:
+                    try:
+                        elements.append(Paragraph(f"<i>{chart_title}</i>", styles['Normal']))
+                        elements.append(Spacer(1, 0.1*inch))
+                        img = RLImage(img_path, width=5.5*inch, height=3*inch)
+                        elements.append(img)
+                        elements.append(Spacer(1, 0.25*inch))
+                    except Exception as e:
+                        logger.warning(f"Error embedding chart image: {str(e)}")
+            
             # Observations
-            elements.append(Paragraph("<b>Observations</b>", styles['Heading2']))
-            for obs in report['observations']:
-                elements.append(Paragraph(f"• {obs}", styles['Normal']))
-            elements.append(Spacer(1, 0.3*inch))
+            observations = report.get('observations', [])
+            if observations:
+                elements.append(Paragraph("<b>Observations</b>", styles['Heading2']))
+                for obs in observations:
+                    obs_text = obs if isinstance(obs, str) else obs.get('observation', str(obs))
+                    elements.append(Paragraph(f"\u2022 {obs_text}", styles['Normal']))
+                elements.append(Spacer(1, 0.3*inch))
             
             # Recommendations
-            elements.append(Paragraph("<b>Recommendations</b>", styles['Heading2']))
-            for rec in report['recommendations']:
-                elements.append(Paragraph(f"• {rec}", styles['Normal']))
+            recommendations = report.get('recommendations', [])
+            if recommendations:
+                elements.append(Paragraph("<b>Recommendations</b>", styles['Heading2']))
+                for rec in recommendations:
+                    rec_text = rec if isinstance(rec, str) else rec.get('recommendation', str(rec))
+                    elements.append(Paragraph(f"\u2022 {rec_text}", styles['Normal']))
             
             # Build PDF
             doc.build(elements)
             
+            # Clean up temporary chart images
+            for img_path, _ in chart_images if charts else []:
+                try:
+                    Path(img_path).unlink(missing_ok=True)
+                except Exception:
+                    pass
+            
             logger.info(f"PDF report generated: {pdf_path}")
             return str(pdf_path)
         
-        except ImportError:
-            logger.warning("reportlab not installed, PDF export unavailable")
-            raise ValueError("PDF export requires reportlab package. Install with: pip install reportlab")
+        except ImportError as e:
+            logger.warning(f"Missing dependency for PDF export: {str(e)}")
+            raise ValueError("PDF export requires reportlab and matplotlib. Install with: pip install reportlab matplotlib")
         except Exception as e:
-            logger.error(f"Error exporting report to PDF: {str(e)}")
+            logger.error(f"Error exporting report to PDF: {str(e)}", exc_info=True)
             raise
+    
+    def _render_charts_to_images(self, charts: List[Dict], output_path: str, report_id: str) -> List[tuple]:
+        """
+        Render chart data to PNG images using matplotlib for PDF embedding.
+        
+        Returns:
+            List of (image_path, chart_title) tuples
+        """
+        import matplotlib
+        matplotlib.use('Agg')  # Non-interactive backend
+        import matplotlib.pyplot as plt
+        import matplotlib.colors as mcolors
+        
+        results = []
+        
+        for i, chart in enumerate(charts):
+            try:
+                fig, ax = plt.subplots(figsize=(8, 4.5))
+                fig.patch.set_facecolor('#fafbfc')
+                ax.set_facecolor('#fafbfc')
+                chart_title = chart.get('title', f'Chart {i+1}')
+                
+                if chart['type'] == 'bar':
+                    self._render_bar_chart(ax, chart)
+                elif chart['type'] == 'line':
+                    self._render_line_chart(ax, chart)
+                elif chart['type'] == 'pie':
+                    self._render_pie_chart(ax, chart)
+                elif chart['type'] == 'heatmap':
+                    self._render_heatmap_chart(fig, ax, chart)
+                else:
+                    plt.close(fig)
+                    continue
+                
+                ax.set_title(chart_title, fontsize=12, fontweight='bold', pad=12, color='#1e293b')
+                
+                img_path = str(Path(output_path) / f"chart_{report_id}_{i}.png")
+                fig.savefig(img_path, dpi=150, bbox_inches='tight', facecolor=fig.get_facecolor())
+                plt.close(fig)
+                
+                results.append((img_path, chart_title))
+                
+            except Exception as e:
+                logger.warning(f"Error rendering chart '{chart.get('title', i)}': {str(e)}")
+                try:
+                    plt.close(fig)
+                except:
+                    pass
+        
+        return results
+    
+    def _render_bar_chart(self, ax, chart: Dict):
+        """Render a bar chart onto a matplotlib axes."""
+        data = chart.get('data', [])
+        names = [d.get('name', '') for d in data]
+        values = [d.get('value', 0) for d in data]
+        color = chart.get('color', '#6366f1')
+        
+        bars = ax.bar(range(len(names)), values, color=color, edgecolor='white', linewidth=0.5)
+        ax.set_xticks(range(len(names)))
+        ax.set_xticklabels(names, rotation=35, ha='right', fontsize=8)
+        ax.set_ylabel(chart.get('yKey', 'Value'), fontsize=9)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.grid(axis='y', alpha=0.3)
+    
+    def _render_line_chart(self, ax, chart: Dict):
+        """Render a line chart onto a matplotlib axes."""
+        data = chart.get('data', [])
+        lines = chart.get('lines', [])
+        x_key = chart.get('xKey', 'date')
+        
+        x_vals = [d.get(x_key, '') for d in data]
+        
+        for line_info in lines:
+            key = line_info.get('key', '')
+            color = line_info.get('color', '#6366f1')
+            y_vals = [d.get(key) for d in data]
+            ax.plot(range(len(x_vals)), y_vals, marker='o', markersize=3, color=color, linewidth=1.5, label=key)
+        
+        # Show subset of x labels to avoid crowding
+        step = max(1, len(x_vals) // 10)
+        ax.set_xticks(range(0, len(x_vals), step))
+        ax.set_xticklabels([x_vals[i] for i in range(0, len(x_vals), step)], rotation=30, ha='right', fontsize=8)
+        ax.legend(fontsize=8, framealpha=0.8)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.grid(alpha=0.3)
+    
+    def _render_pie_chart(self, ax, chart: Dict):
+        """Render a pie/donut chart onto a matplotlib axes."""
+        data = chart.get('data', [])
+        names = [d.get('name', '') for d in data]
+        values = [d.get('value', 0) for d in data]
+        chart_colors = [d.get('color', '#6366f1') for d in data]
+        
+        wedges, texts, autotexts = ax.pie(
+            values, labels=None, colors=chart_colors,
+            autopct='%1.0f%%', pctdistance=0.78,
+            wedgeprops=dict(width=0.45, edgecolor='white', linewidth=1.5),
+            textprops={'fontsize': 8}
+        )
+        # Put names in a legend instead of on the chart
+        ax.legend(wedges, names, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=7, framealpha=0.8)
+        ax.set_aspect('equal')
+    
+    def _render_heatmap_chart(self, fig, ax, chart: Dict):
+        """Render a correlation heatmap onto a matplotlib axes."""
+        columns = chart.get('columns', [])
+        data = chart.get('data', [])
+        
+        # Build matrix
+        matrix = []
+        for row in data:
+            row_vals = []
+            for col in columns:
+                val = row.get(col)
+                row_vals.append(val if val is not None else 0)
+            matrix.append(row_vals)
+        
+        matrix_np = np.array(matrix, dtype=float)
+        
+        im = ax.imshow(matrix_np, cmap='RdYlGn', vmin=-1, vmax=1, aspect='auto')
+        
+        # Labels
+        short_labels = [c[:12] + '…' if len(c) > 12 else c for c in columns]
+        ax.set_xticks(range(len(columns)))
+        ax.set_xticklabels(short_labels, rotation=40, ha='right', fontsize=7)
+        ax.set_yticks(range(len(columns)))
+        ax.set_yticklabels(short_labels, fontsize=7)
+        
+        # Add correlation values as text
+        for r in range(len(columns)):
+            for c_idx in range(len(columns)):
+                val = matrix_np[r, c_idx]
+                text_color = 'white' if abs(val) > 0.6 else 'black'
+                ax.text(c_idx, r, f'{val:.2f}', ha='center', va='center', fontsize=6, color=text_color)
+        
+        fig.colorbar(im, ax=ax, shrink=0.8, label='Correlation')

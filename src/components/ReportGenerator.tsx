@@ -119,23 +119,30 @@ function ReportLineChart({ chart }: { chart: ChartDescriptor }) {
 }
 
 function ReportPieChart({ chart }: { chart: ChartDescriptor }) {
+  // Truncate names for readability
+  const truncate = (s: string, max = 22) => s.length > max ? s.slice(0, max) + '…' : s;
+  const processedData = chart.data.map((d: any) => ({
+    ...d,
+    displayName: truncate(d.name),
+  }));
+
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="100%" height={280}>
       <PieChart>
         <Pie
-          data={chart.data}
+          data={processedData}
           cx="50%"
           cy="50%"
           innerRadius={50}
           outerRadius={90}
           paddingAngle={3}
           dataKey="value"
-          nameKey="name"
-          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          nameKey="displayName"
+          label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
           labelLine={false}
-          style={{ fontSize: '11px' }}
+          style={{ fontSize: '10px' }}
         >
-          {chart.data.map((entry: any, idx: number) => (
+          {processedData.map((entry: any, idx: number) => (
             <Cell key={idx} fill={entry.color || '#6366f1'} />
           ))}
         </Pie>
@@ -146,8 +153,12 @@ function ReportPieChart({ chart }: { chart: ChartDescriptor }) {
             borderRadius: '8px',
             fontSize: '12px',
           }}
+          formatter={(value: any, name: any) => [value, name]}
         />
-        <Legend wrapperStyle={{ fontSize: '11px' }} />
+        <Legend
+          wrapperStyle={{ fontSize: '10px', lineHeight: '16px' }}
+          formatter={(value: string) => truncate(value, 28)}
+        />
       </PieChart>
     </ResponsiveContainer>
   );

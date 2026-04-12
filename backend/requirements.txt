@@ -32,6 +32,7 @@ xlrd==2.0.1
 
 # PDF Generation
 reportlab==4.0.9
+matplotlib>=3.7.0
 
 # Utilities
 python-dotenv==1.0.1

@@ -563,13 +563,42 @@ class ReportEngine:
             self.reports_cache = []
     
     def _save_reports_to_disk(self):
-        """Save current reports to disk for persistence."""
+        """Save current reports to disk for persistence. Keeps only the 5 most recent."""
         try:
+            # Sort by date descending and keep only 5 most recent
+            self.reports_cache.sort(
+                key=lambda r: r.get('date', ''), reverse=True
+            )
+            
+            if len(self.reports_cache) > 5:
+                old_reports = self.reports_cache[5:]
+                self.reports_cache = self.reports_cache[:5]
+                
+                # Clean up old generated PDFs and chart images
+                for old in old_reports:
+                    old_id = old.get('id', '')
+                    if old_id:
+                        self._cleanup_report_files(old_id)
+                
+                logger.info(f"Pruned {len(old_reports)} old reports, keeping 5 most recent")
+            
             with open(self.reports_metadata_file, 'w', encoding='utf-8') as f:
                 json.dump(self.reports_cache, f, indent=2, ensure_ascii=False)
             logger.info(f"Saved {len(self.reports_cache)} reports to disk")
         except Exception as e:
             logger.error(f"Error saving reports to disk: {str(e)}")
+    
+    def _cleanup_report_files(self, report_id: str):
+        """Delete generated PDF and chart images for a given report ID."""
+        try:
+            for f in self.data_path.glob(f"report_{report_id}*"):
+                f.unlink(missing_ok=True)
+                logger.debug(f"Cleaned up: {f}")
+            for f in self.data_path.glob(f"chart_{report_id}*"):
+                f.unlink(missing_ok=True)
+                logger.debug(f"Cleaned up: {f}")
+        except Exception as e:
+            logger.warning(f"Error cleaning up files for report {report_id}: {str(e)}")
     
     def clear_all_reports(self):
         """Clear all reports - used by Dangerous Zone in settings."""

@@ -20,12 +20,13 @@ build/
 .env
 .env.local
 
-# Data files (don't commit user data)
-data/docs/*.pdf
-data/csv/*.csv
-data/csv/*.xlsx
-data/csv/*.xls
-data/csv/*.pdf
+# Data files (don't commit user uploads or generated files)
+**/data/docs/*.pdf
+**/data/csv/*.csv
+**/data/csv/*.xlsx
+**/data/csv/*.xls
+**/data/csv/*.pdf
+**/data/csv/reports_metadata.json
 
 # Vector store
 vector_store/

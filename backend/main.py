@@ -4,7 +4,6 @@ Internal Operations Intelligence Assistant Backend
 """
 
 import os
-import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 from datetime import datetime
@@ -20,7 +19,7 @@ os.environ['HF_HUB_DOWNLOAD_TIMEOUT'] = '600'  # 10 minutes for model download
 os.environ['REQUESTS_TIMEOUT'] = '600'
 os.environ['HF_HUB_ETAG_TIMEOUT'] = '600'
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
@@ -54,19 +53,31 @@ app = FastAPI(
     version="1.0.0"
 )
 
+def _get_allowed_origins() -> List[str]:
+    """Parse CORS origins from environment (comma-separated) with safe fallback."""
+    raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
+    if raw_origins.strip() == "*":
+        return ["*"]
+
+    origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+    return origins or ["*"]
+
+
+MAX_FILE_SIZE_BYTES = int(os.getenv("MAX_FILE_SIZE", str(10 * 1024 * 1024)))
+
 # CORS configuration - adjust origins for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=_get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Get API keys from environment
-hf_api_key = os.getenv("HF_API_KEY")
+hf_api_key = os.getenv("HF_API_KEY") or os.getenv("HUGGINGFACE_API_KEY")
 if not hf_api_key:
-    logger.warning("HF_API_KEY not found. Get a free key at: https://huggingface.co/settings/tokens")
+    logger.warning("HuggingFace key not found (HF_API_KEY / HUGGINGFACE_API_KEY)")
 
 # Initialize engines
 try:
@@ -92,8 +103,11 @@ except Exception as e:
     logger.warning("Using fallback Report engine")
     # Create a simple fallback object with required methods
     class FallbackReportEngine:
+        data_path = "./data/csv"
+
         def get_all_reports(self):
             return []
+
         def clear_all_reports(self):
             pass
     report_engine = FallbackReportEngine()
@@ -142,10 +156,15 @@ async def root():
 async def health_check():
     """Detailed health check."""
     try:
-        stats = rag_engine.get_stats()
+        stats = rag_engine.get_stats() if rag_engine else {
+            "total_documents": 0,
+            "total_chunks": 0,
+            "vector_store_path": "N/A"
+        }
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
+            "rag_status": "available" if rag_engine else "unavailable",
             "rag_stats": stats,
             "reports_count": len(report_engine.get_all_reports())
         }
@@ -172,18 +191,31 @@ async def upload_document(file: UploadFile = File(...)):
         Upload status and metadata
     """
     try:
+        if not rag_engine:
+            raise HTTPException(status_code=503, detail="Document engine is unavailable")
+
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="File name is missing")
+
         # Validate file type
-        if not file.filename.endswith('.pdf'):
+        if not file.filename.lower().endswith('.pdf'):
             raise HTTPException(
                 status_code=400, 
                 detail="Only PDF files are supported"
+            )
+
+        file_bytes = await file.read()
+        if len(file_bytes) > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Max allowed size is {MAX_FILE_SIZE_BYTES // (1024 * 1024)} MB"
             )
         
         # Save uploaded file
         file_path = Path(rag_engine.docs_path) / file.filename
         
         with file_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            buffer.write(file_bytes)
         
         logger.info(f"Saved document: {file.filename}")
         
@@ -200,6 +232,8 @@ async def upload_document(file: UploadFile = File(...)):
             }
         )
     
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error uploading document: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -214,6 +248,9 @@ async def list_documents():
         List of document metadata
     """
     try:
+        if not rag_engine:
+            raise HTTPException(status_code=503, detail="Document engine is unavailable")
+
         documents = rag_engine.list_documents()
         return {
             "status": "success",
@@ -237,6 +274,9 @@ async def delete_document(filename: str):
         Deletion status
     """
     try:
+        if not rag_engine:
+            raise HTTPException(status_code=503, detail="Document engine is unavailable")
+
         result = rag_engine.delete_document(filename)
         return result
     except FileNotFoundError:
@@ -293,6 +333,9 @@ async def query_documents(request: QueryRequest):
         Answer with citations
     """
     try:
+        if not rag_engine:
+            raise HTTPException(status_code=503, detail="Document query engine is unavailable")
+
         if not request.question.strip():
             raise HTTPException(status_code=400, detail="Question cannot be empty")
         
@@ -306,6 +349,8 @@ async def query_documents(request: QueryRequest):
             chunks_retrieved=result['chunks_retrieved']
         )
     
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error processing query: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -327,20 +372,32 @@ async def upload_data_file(file: UploadFile = File(...)):
         Upload status
     """
     try:
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="File name is missing")
+
+        normalized_name = file.filename.lower()
+
         # Validate file type
-        if not (file.filename.endswith('.csv') or 
-                file.filename.endswith('.xlsx') or 
-                file.filename.endswith('.xls')):
+        if not (normalized_name.endswith('.csv') or 
+                normalized_name.endswith('.xlsx') or 
+                normalized_name.endswith('.xls')):
             raise HTTPException(
                 status_code=400,
                 detail="Only CSV and Excel files are supported"
+            )
+
+        file_bytes = await file.read()
+        if len(file_bytes) > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Max allowed size is {MAX_FILE_SIZE_BYTES // (1024 * 1024)} MB"
             )
         
         # Save uploaded file
         file_path = Path(report_engine.data_path) / file.filename
         
         with file_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            buffer.write(file_bytes)
         
         logger.info(f"Saved data file: {file.filename}")
         
@@ -350,6 +407,8 @@ async def upload_data_file(file: UploadFile = File(...)):
             message="Data file uploaded successfully"
         )
     
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error uploading data file: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -367,22 +426,33 @@ async def generate_report(file: UploadFile = File(...)):
         Generated report
     """
     try:
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="File name is missing")
+
         logger.info(f"Received file for report generation: {file.filename}")
+        normalized_name = file.filename.lower()
         
         # Validate file type
-        if not (file.filename.endswith('.csv') or 
-                file.filename.endswith('.xlsx') or 
-                file.filename.endswith('.xls')):
+        if not (normalized_name.endswith('.csv') or 
+                normalized_name.endswith('.xlsx') or 
+                normalized_name.endswith('.xls')):
             raise HTTPException(
                 status_code=400,
                 detail="Only CSV and Excel files are supported"
+            )
+
+        file_bytes = await file.read()
+        if len(file_bytes) > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Max allowed size is {MAX_FILE_SIZE_BYTES // (1024 * 1024)} MB"
             )
         
         # Save uploaded file
         file_path = Path(report_engine.data_path) / file.filename
         
         with file_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            buffer.write(file_bytes)
         
         logger.info(f"File saved. Generating report for: {file.filename}")
         

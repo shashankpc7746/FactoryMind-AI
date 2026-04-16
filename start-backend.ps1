@@ -4,27 +4,34 @@
 Write-Host "🚀 Starting FactoryMind AI Backend..." -ForegroundColor Cyan
 Write-Host ""
 
-# Check if virtual environment exists
-if (-Not (Test-Path "venv\Scripts\Activate.ps1")) {
+# Check if virtual environment exists (supports both venv and fact-ai)
+$venvPath = $null
+if (Test-Path "fact-ai\Scripts\Activate.ps1") {
+    $venvPath = "fact-ai\Scripts\Activate.ps1"
+} elseif (Test-Path "venv\Scripts\Activate.ps1") {
+    $venvPath = "venv\Scripts\Activate.ps1"
+}
+
+if (-Not $venvPath) {
     Write-Host "❌ Virtual environment not found!" -ForegroundColor Red
     Write-Host "Please run setup first:" -ForegroundColor Yellow
-    Write-Host "  python -m venv venv" -ForegroundColor Yellow
-    Write-Host "  venv\Scripts\activate" -ForegroundColor Yellow
-    Write-Host "  pip install -r requirements.txt" -ForegroundColor Yellow
+    Write-Host "  python -m venv fact-ai" -ForegroundColor Yellow
+    Write-Host "  fact-ai\Scripts\activate" -ForegroundColor Yellow
+    Write-Host "  pip install -r backend\requirements.txt" -ForegroundColor Yellow
     exit 1
 }
 
 # Check if .env exists
 if (-Not (Test-Path ".env")) {
     Write-Host "⚠️  Warning: .env file not found!" -ForegroundColor Yellow
-    Write-Host "Please create .env from .env.example and add your OPENAI_API_KEY" -ForegroundColor Yellow
+    Write-Host "Please create .env from .env.example and add GROQ_API_KEY + HUGGINGFACE_API_KEY" -ForegroundColor Yellow
     Write-Host ""
     Read-Host "Press Enter to continue anyway or Ctrl+C to exit"
 }
 
 # Activate virtual environment
 Write-Host "📦 Activating virtual environment..." -ForegroundColor Green
-& "venv\Scripts\Activate.ps1"
+& $venvPath
 
 # Change to backend directory
 Set-Location backend

@@ -7,6 +7,7 @@ import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
+import { clearAllData } from '../services/api';
 
 interface SettingsProps {
   theme: 'light' | 'dark';
@@ -25,27 +26,107 @@ interface SettingsProps {
     role: string;
     department: string;
   }) => void;
+  preferences: {
+    compactMode: boolean;
+    highContrast: boolean;
+    notifications: {
+      documentIndexingComplete: boolean;
+      reportGenerationComplete: boolean;
+      systemUpdates: boolean;
+    };
+  };
+  onUpdatePreferences: (preferences: {
+    compactMode: boolean;
+    highContrast: boolean;
+    notifications: {
+      documentIndexingComplete: boolean;
+      reportGenerationComplete: boolean;
+      systemUpdates: boolean;
+    };
+  }) => void;
 }
 
-export function Settings({ theme, onToggleTheme, userProfile, onUpdateProfile }: SettingsProps) {
+export function Settings({
+  theme,
+  onToggleTheme,
+  userProfile,
+  onUpdateProfile,
+  preferences,
+  onUpdatePreferences,
+}: SettingsProps) {
   const [formData, setFormData] = useState(userProfile);
+  const [preferencesData, setPreferencesData] = useState(preferences);
+  const [savingPreferences, setSavingPreferences] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     setFormData(userProfile);
   }, [userProfile]);
+
+  useEffect(() => {
+    setPreferencesData(preferences);
+  }, [preferences]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSaveProfile = () => {
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      toast.error('First name and last name are required');
+      return;
+    }
+
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
     onUpdateProfile(formData);
     toast.success('Profile updated successfully');
   };
 
-  const handleResetData = () => {
+  const handlePreferenceToggle = (
+    key: 'compactMode' | 'highContrast',
+    value: boolean
+  ) => {
+    setPreferencesData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleNotificationToggle = (
+    key: 'documentIndexingComplete' | 'reportGenerationComplete' | 'systemUpdates',
+    value: boolean
+  ) => {
+    setPreferencesData((prev) => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [key]: value,
+      },
+    }));
+  };
+
+  const handleSavePreferences = () => {
+    setSavingPreferences(true);
+    onUpdatePreferences(preferencesData);
+    toast.success('Preferences saved successfully');
+    setSavingPreferences(false);
+  };
+
+  const profileChanged = JSON.stringify(formData) !== JSON.stringify(userProfile);
+  const preferencesChanged = JSON.stringify(preferencesData) !== JSON.stringify(preferences);
+
+  const handleResetData = async () => {
     if (confirm('Are you sure you want to reset all data? This action cannot be undone.')) {
-      toast.success('Data has been reset');
+      try {
+        setIsResetting(true);
+        await clearAllData();
+        toast.success('All data has been reset successfully');
+      } catch (error) {
+        toast.error(`Failed to reset data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setIsResetting(false);
+      }
     }
   };
 
@@ -111,7 +192,11 @@ export function Settings({ theme, onToggleTheme, userProfile, onUpdateProfile }:
             />
           </div>
 
-          <Button onClick={handleSaveProfile} className="w-full sm:w-auto text-sm sm:text-base">
+          <Button
+            onClick={handleSaveProfile}
+            disabled={!profileChanged}
+            className="w-full sm:w-auto text-sm sm:text-base"
+          >
             Save Changes
           </Button>
         </div>
@@ -148,7 +233,10 @@ export function Settings({ theme, onToggleTheme, userProfile, onUpdateProfile }:
                 Reduce spacing for denser information display
               </p>
             </div>
-            <Switch />
+            <Switch
+              checked={preferencesData.compactMode}
+              onCheckedChange={(checked) => handlePreferenceToggle('compactMode', checked)}
+            />
           </div>
 
           <div className="flex items-center justify-between gap-4">
@@ -158,8 +246,19 @@ export function Settings({ theme, onToggleTheme, userProfile, onUpdateProfile }:
                 Increase contrast for better readability
               </p>
             </div>
-            <Switch />
+            <Switch
+              checked={preferencesData.highContrast}
+              onCheckedChange={(checked) => handlePreferenceToggle('highContrast', checked)}
+            />
           </div>
+
+          <Button
+            onClick={handleSavePreferences}
+            disabled={!preferencesChanged || savingPreferences}
+            className="w-full sm:w-auto text-sm sm:text-base"
+          >
+            Save Appearance Preferences
+          </Button>
         </div>
       </Card>
 
@@ -178,7 +277,10 @@ export function Settings({ theme, onToggleTheme, userProfile, onUpdateProfile }:
                 Notify when documents are indexed and ready
               </p>
             </div>
-            <Switch defaultChecked />
+            <Switch
+              checked={preferencesData.notifications.documentIndexingComplete}
+              onCheckedChange={(checked) => handleNotificationToggle('documentIndexingComplete', checked)}
+            />
           </div>
 
           <Separator />
@@ -190,7 +292,10 @@ export function Settings({ theme, onToggleTheme, userProfile, onUpdateProfile }:
                 Notify when reports are generated
               </p>
             </div>
-            <Switch defaultChecked />
+            <Switch
+              checked={preferencesData.notifications.reportGenerationComplete}
+              onCheckedChange={(checked) => handleNotificationToggle('reportGenerationComplete', checked)}
+            />
           </div>
 
           <Separator />
@@ -202,8 +307,19 @@ export function Settings({ theme, onToggleTheme, userProfile, onUpdateProfile }:
                 Notify about new features and improvements
               </p>
             </div>
-            <Switch defaultChecked />
+            <Switch
+              checked={preferencesData.notifications.systemUpdates}
+              onCheckedChange={(checked) => handleNotificationToggle('systemUpdates', checked)}
+            />
           </div>
+
+          <Button
+            onClick={handleSavePreferences}
+            disabled={!preferencesChanged || savingPreferences}
+            className="w-full sm:w-auto text-sm sm:text-base"
+          >
+            Save Notification Preferences
+          </Button>
         </div>
       </Card>
 
@@ -222,9 +338,10 @@ export function Settings({ theme, onToggleTheme, userProfile, onUpdateProfile }:
           <Button
             variant="destructive"
             onClick={handleResetData}
+            disabled={isResetting}
             className="w-full sm:w-auto text-sm sm:text-base"
           >
-            Reset All Data
+            {isResetting ? 'Resetting...' : 'Reset All Data'}
           </Button>
         </div>
       </Card>

@@ -186,3 +186,19 @@
 html {
   font-size: var(--font-size);
 }
+
+html.compact-mode {
+  --font-size: 15px;
+  --radius: 0.625rem;
+}
+
+html.high-contrast {
+  --border: rgba(0, 0, 0, 0.35);
+  --ring: #0f172a;
+}
+
+html.dark.high-contrast {
+  --border: #64748b;
+  --ring: #f8fafc;
+  --muted-foreground: #cbd5e1;
+}

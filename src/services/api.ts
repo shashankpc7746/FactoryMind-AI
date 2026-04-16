@@ -5,6 +5,21 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+async function parseErrorMessage(response: Response, fallback: string): Promise<string> {
+  try {
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const error = await response.json();
+      return error.detail || error.message || fallback;
+    }
+
+    const text = await response.text();
+    return text || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export interface QueryRequest {
   question: string;
 }
@@ -69,8 +84,7 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to upload document');
+    throw new Error(await parseErrorMessage(response, 'Failed to upload document'));
   }
 
   return response.json();
@@ -89,8 +103,7 @@ export async function uploadDataFile(file: File): Promise<UploadResponse> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to upload data file');
+    throw new Error(await parseErrorMessage(response, 'Failed to upload data file'));
   }
 
   return response.json();
@@ -109,8 +122,7 @@ export async function queryDocuments(question: string): Promise<QueryResponse> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to query documents');
+    throw new Error(await parseErrorMessage(response, 'Failed to query documents'));
   }
 
   return response.json();
@@ -129,8 +141,7 @@ export async function generateReport(file: File): Promise<Report> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to generate report');
+    throw new Error(await parseErrorMessage(response, 'Failed to generate report'));
   }
 
   return response.json();
@@ -158,9 +169,23 @@ export async function deleteDocument(filename: string): Promise<void> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to delete document');
+    throw new Error(await parseErrorMessage(response, 'Failed to delete document'));
   }
+}
+
+/**
+ * Clear all stored data (documents, reports, vector store)
+ */
+export async function clearAllData(): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/clear-all-data`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response, 'Failed to clear all data'));
+  }
+
+  return response.json();
 }
 
 /**

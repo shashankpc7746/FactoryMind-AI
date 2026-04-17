@@ -3,7 +3,73 @@
  * Handles all backend communication for FactoryMind AI
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+function resolveApiBaseUrl() {
+  const configured = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  if (configured) {
+    return configured.replace(/\/$/, '');
+  }
+
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname, origin } = window.location;
+
+    // Local development fallback.
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000';
+    }
+
+    // Render convention fallback: <frontend>.onrender.com -> <frontend>-backend.onrender.com
+    if (hostname.endsWith('.onrender.com')) {
+      const serviceName = hostname.replace('.onrender.com', '');
+      if (serviceName.endsWith('-backend')) {
+        return origin;
+      }
+      return `${protocol}//${serviceName}-backend.onrender.com`;
+    }
+
+    // Same-origin fallback for reverse proxy style deployments.
+    return origin;
+  }
+
+  return 'http://localhost:8000';
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
+
+function isNetworkError(error: unknown): boolean {
+  return error instanceof TypeError;
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function apiRequest(path: string, init: RequestInit, fallbackError: string): Promise<Response> {
+  const url = `${API_BASE_URL}${path}`;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch(url, init);
+      if (!response.ok) {
+        throw new Error(await parseErrorMessage(response, fallbackError));
+      }
+      return response;
+    } catch (error) {
+      const shouldRetry = isNetworkError(error) && attempt === 0;
+      if (shouldRetry) {
+        await wait(1200);
+        continue;
+      }
+
+      if (isNetworkError(error)) {
+        throw new Error(`Unable to connect to API at ${API_BASE_URL}. Check backend URL/CORS/deployment status.`);
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error(fallbackError);
+}
 
 async function parseErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
@@ -78,14 +144,10 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${API_BASE_URL}/upload/document`, {
+  const response = await apiRequest('/upload/document', {
     method: 'POST',
     body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response, 'Failed to upload document'));
-  }
+  }, 'Failed to upload document');
 
   return response.json();
 }
@@ -97,14 +159,10 @@ export async function uploadDataFile(file: File): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${API_BASE_URL}/upload/data`, {
+  const response = await apiRequest('/upload/data', {
     method: 'POST',
     body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response, 'Failed to upload data file'));
-  }
+  }, 'Failed to upload data file');
 
   return response.json();
 }
@@ -113,17 +171,13 @@ export async function uploadDataFile(file: File): Promise<UploadResponse> {
  * Query documents using RAG
  */
 export async function queryDocuments(question: string): Promise<QueryResponse> {
-  const response = await fetch(`${API_BASE_URL}/chat/query`, {
+  const response = await apiRequest('/chat/query', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ question }),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response, 'Failed to query documents'));
-  }
+  }, 'Failed to query documents');
 
   return response.json();
 }
@@ -135,14 +189,10 @@ export async function generateReport(file: File): Promise<Report> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${API_BASE_URL}/report/generate`, {
+  const response = await apiRequest('/report/generate', {
     method: 'POST',
     body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response, 'Failed to generate report'));
-  }
+  }, 'Failed to generate report');
 
   return response.json();
 }
@@ -151,11 +201,7 @@ export async function generateReport(file: File): Promise<Report> {
  * List all uploaded documents
  */
 export async function listDocuments(): Promise<{ documents: Document[]; count: number }> {
-  const response = await fetch(`${API_BASE_URL}/documents`);
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch documents');
-  }
+  const response = await apiRequest('/documents', { method: 'GET' }, 'Failed to fetch documents');
 
   return response.json();
 }
@@ -164,26 +210,18 @@ export async function listDocuments(): Promise<{ documents: Document[]; count: n
  * Delete a document
  */
 export async function deleteDocument(filename: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/documents/${encodeURIComponent(filename)}`, {
+  await apiRequest(`/documents/${encodeURIComponent(filename)}`, {
     method: 'DELETE',
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response, 'Failed to delete document'));
-  }
+  }, 'Failed to delete document');
 }
 
 /**
  * Clear all stored data (documents, reports, vector store)
  */
 export async function clearAllData(): Promise<{ status: string; message: string }> {
-  const response = await fetch(`${API_BASE_URL}/clear-all-data`, {
+  const response = await apiRequest('/clear-all-data', {
     method: 'DELETE',
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response, 'Failed to clear all data'));
-  }
+  }, 'Failed to clear all data');
 
   return response.json();
 }
@@ -192,11 +230,7 @@ export async function clearAllData(): Promise<{ status: string; message: string 
  * List all generated reports
  */
 export async function listReports(): Promise<{ reports: Report[]; count: number; data?: Report[] }> {
-  const response = await fetch(`${API_BASE_URL}/reports`);
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch reports');
-  }
+  const response = await apiRequest('/reports', { method: 'GET' }, 'Failed to fetch reports');
 
   return response.json();
 }
@@ -205,11 +239,7 @@ export async function listReports(): Promise<{ reports: Report[]; count: number;
  * Get specific report by ID
  */
 export async function getReport(reportId: string): Promise<Report> {
-  const response = await fetch(`${API_BASE_URL}/reports/${reportId}`);
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch report');
-  }
+  const response = await apiRequest(`/reports/${reportId}`, { method: 'GET' }, 'Failed to fetch report');
 
   return response.json();
 }
@@ -218,11 +248,7 @@ export async function getReport(reportId: string): Promise<Report> {
  * Download report as PDF
  */
 export async function downloadReportPDF(reportId: string): Promise<Blob> {
-  const response = await fetch(`${API_BASE_URL}/reports/${reportId}/download`);
-
-  if (!response.ok) {
-    throw new Error('Failed to download report PDF');
-  }
+  const response = await apiRequest(`/reports/${reportId}/download`, { method: 'GET' }, 'Failed to download report PDF');
 
   return response.blob();
 }
@@ -231,24 +257,16 @@ export async function downloadReportPDF(reportId: string): Promise<Blob> {
  * Delete a report
  */
 export async function deleteReport(reportId: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/reports/${reportId}`, {
+  await apiRequest(`/reports/${reportId}`, {
     method: 'DELETE',
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to delete report');
-  }
+  }, 'Failed to delete report');
 }
 
 /**
  * Get history (documents and reports)
  */
 export async function getHistory() {
-  const response = await fetch(`${API_BASE_URL}/history`);
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch history');
-  }
+  const response = await apiRequest('/history', { method: 'GET' }, 'Failed to fetch history');
 
   return response.json();
 }
@@ -257,6 +275,6 @@ export async function getHistory() {
  * Health check
  */
 export async function healthCheck() {
-  const response = await fetch(`${API_BASE_URL}/health`);
+  const response = await apiRequest('/health', { method: 'GET' }, 'Health check failed');
   return response.json();
 }

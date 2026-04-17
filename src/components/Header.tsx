@@ -1,9 +1,11 @@
 import { Search, Bell } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
+import { toast } from 'sonner';
+import { APP_NOTIFICATION_EVENT, AppNotificationPayload } from '../services/events';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,7 @@ interface HeaderProps {
 }
 
 export function Header({ title, onNavigate, userName }: HeaderProps) {
+  const [searchValue, setSearchValue] = useState('');
   const [notifications, setNotifications] = useState<Array<{
     id: string;
     title: string;
@@ -33,7 +36,44 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
     unread: boolean;
   }>>([]);
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('appNotifications');
+      if (stored) {
+        setNotifications(JSON.parse(stored));
+      }
+    } catch {
+      setNotifications([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('appNotifications', JSON.stringify(notifications.slice(0, 50)));
+  }, [notifications]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const customEvent = event as CustomEvent<AppNotificationPayload>;
+      const detail = customEvent.detail;
+      if (!detail) return;
+
+      const timestamp = new Date();
+      const next = {
+        id: `${timestamp.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+        title: detail.title,
+        message: detail.message,
+        time: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        unread: true,
+      };
+
+      setNotifications((prev) => [next, ...prev].slice(0, 50));
+    };
+
+    window.addEventListener(APP_NOTIFICATION_EVENT, handler as EventListener);
+    return () => window.removeEventListener(APP_NOTIFICATION_EVENT, handler as EventListener);
+  }, []);
+
+  const unreadCount = useMemo(() => notifications.filter(n => n.unread).length, [notifications]);
 
   const handleMarkAllAsRead = () => {
     setNotifications(notifications.map(n => ({ ...n, unread: false })));
@@ -43,6 +83,41 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
     setNotifications(notifications.map(n => 
       n.id === id ? { ...n, unread: false } : n
     ));
+  };
+
+  const handleSearchSubmit = () => {
+    const query = searchValue.trim().toLowerCase();
+    if (!query) return;
+
+    if (query.includes('document') || query.includes('pdf')) {
+      onNavigate?.('documents');
+      toast.success('Opened Document Manager');
+      return;
+    }
+    if (query.includes('report') || query.includes('csv') || query.includes('excel')) {
+      onNavigate?.('reports');
+      toast.success('Opened Report Generator');
+      return;
+    }
+    if (query.includes('history') || query.includes('recent')) {
+      onNavigate?.('history');
+      return;
+    }
+    if (query.includes('setting') || query.includes('profile') || query.includes('theme')) {
+      onNavigate?.('settings');
+      return;
+    }
+
+    onNavigate?.('chat');
+    toast.info('Opened Chat Assistant for your query');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('userPreferences');
+    localStorage.removeItem('appNotifications');
+    toast.success('Signed out locally');
+    window.location.reload();
   };
 
   return (
@@ -60,6 +135,14 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
             <Input
               type="search"
               placeholder="Search queries, documents, reports..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearchSubmit();
+                }
+              }}
               className="pl-10 bg-input-background w-full"
             />
           </div>
@@ -89,6 +172,9 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
                 </div>
               </div>
               <div className="max-h-[400px] overflow-y-auto">
+                {notifications.length === 0 && (
+                  <div className="p-6 text-sm text-muted-foreground text-center">No notifications yet</div>
+                )}
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
@@ -139,7 +225,7 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
                 Profile Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => alert('Logging out...')}>
+              <DropdownMenuItem onClick={handleLogout}>
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>

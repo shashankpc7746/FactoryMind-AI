@@ -8,6 +8,7 @@ import { Separator } from './ui/separator';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { clearAllData } from '../services/api';
+import { emitNotification } from '../services/events';
 
 interface SettingsProps {
   theme: 'light' | 'dark';
@@ -84,6 +85,11 @@ export function Settings({
 
     onUpdateProfile(formData);
     toast.success('Profile updated successfully');
+    emitNotification({
+      title: 'Profile Updated',
+      message: 'Your profile information has been saved.',
+      level: 'success',
+    });
   };
 
   const handlePreferenceToggle = (
@@ -110,6 +116,11 @@ export function Settings({
     setSavingPreferences(true);
     onUpdatePreferences(preferencesData);
     toast.success('Preferences saved successfully');
+    emitNotification({
+      title: 'Preferences Updated',
+      message: 'Appearance and notification settings saved.',
+      level: 'success',
+    });
     setSavingPreferences(false);
   };
 
@@ -122,8 +133,18 @@ export function Settings({
         setIsResetting(true);
         await clearAllData();
         toast.success('All data has been reset successfully');
+        emitNotification({
+          title: 'All Data Reset',
+          message: 'Documents, reports, and vectors were cleared.',
+          level: 'warning',
+        });
       } catch (error) {
         toast.error(`Failed to reset data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        emitNotification({
+          title: 'Reset Failed',
+          message: error instanceof Error ? error.message : 'Unknown reset error',
+          level: 'error',
+        });
       } finally {
         setIsResetting(false);
       }

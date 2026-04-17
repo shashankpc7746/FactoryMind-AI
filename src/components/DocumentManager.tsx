@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { toast } from 'sonner';
 import * as api from '../services/api';
+import { emitNotification } from '../services/events';
 
 interface Document {
   id: string;
@@ -125,10 +126,20 @@ export function DocumentManager() {
       
       setDocuments((prev) => [newDoc, ...prev]);
       toast.success(`Document indexed successfully (${result.details?.chunks} chunks, ${result.details?.pages} pages)`);
+      emitNotification({
+        title: 'Document Indexed',
+        message: `${file.name} is ready for Q&A.`,
+        level: 'success',
+      });
 
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(`Failed to upload: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      emitNotification({
+        title: 'Document Upload Failed',
+        message: error instanceof Error ? error.message : 'Unknown upload error',
+        level: 'error',
+      });
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -140,6 +151,11 @@ export function DocumentManager() {
       await api.deleteDocument(filename);
       setDocuments((prev) => prev.filter((doc) => doc.id !== id));
       toast.success('Document deleted');
+      emitNotification({
+        title: 'Document Deleted',
+        message: `${filename} was removed from indexed documents.`,
+        level: 'info',
+      });
     } catch (error) {
       console.error('Delete error:', error);
       toast.error(`Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}`);

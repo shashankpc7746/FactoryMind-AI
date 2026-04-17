@@ -4,6 +4,8 @@ import { Card } from './ui/card';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import * as api from '../services/api';
 
 interface HistoryItem {
   id: string;
@@ -17,13 +19,12 @@ export function History() {
   const [searchQuery, setSearchQuery] = useState('');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const response = await fetch(`${apiUrl}/history`);
-        const data = await response.json();
+        const data = await api.getHistory();
         
         const items: HistoryItem[] = [];
         
@@ -99,6 +100,7 @@ export function History() {
           <Card
             key={item.id}
             className="p-3 sm:p-4 md:p-5 hover:shadow-md transition-all cursor-pointer group"
+            onClick={() => setSelectedItem(item)}
           >
             <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
               {/* Icon */}
@@ -142,6 +144,10 @@ export function History() {
                     size="sm"
                     variant="ghost"
                     className="opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline-flex"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedItem(item);
+                    }}
                   >
                     View Details
                   </Button>
@@ -169,6 +175,23 @@ export function History() {
           </Card>
         )}
       </div>
+
+      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedItem?.title}</DialogTitle>
+            <DialogDescription>
+              {selectedItem ? `${selectedItem.date.toLocaleDateString()} at ${selectedItem.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Badge variant={selectedItem?.type === 'chat' ? 'default' : 'secondary'}>
+              {selectedItem?.type === 'chat' ? 'Document Activity' : 'Report Activity'}
+            </Badge>
+            <p className="text-sm text-muted-foreground">{selectedItem?.preview}</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

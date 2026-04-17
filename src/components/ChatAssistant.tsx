@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import * as api from '../services/api';
 import logoImage from '../images/FactoryMind-AI.png';
+import { emitNotification } from '../services/events';
 
 interface Message {
   id: string;
@@ -94,10 +95,6 @@ export function ChatAssistant() {
     }
   };
 
-  const handleFileUpload = (type: 'document' | 'data') => {
-    fileInputRef.current?.click();
-  };
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -124,6 +121,11 @@ export function ChatAssistant() {
           timestamp: new Date(),
         };
         setMessages((prev: Message[]) => [...prev, systemMessage]);
+        emitNotification({
+          title: 'Document Indexed',
+          message: `${file.name} uploaded from chat.`,
+          level: 'success',
+        });
       } else if (isDataFile) {
         toast.loading('Uploading data file...', { id: 'upload' });
         await api.uploadDataFile(file);
@@ -137,10 +139,20 @@ export function ChatAssistant() {
           timestamp: new Date(),
         };
         setMessages((prev: Message[]) => [...prev, systemMessage]);
+        emitNotification({
+          title: 'Data File Uploaded',
+          message: `${file.name} is ready for report generation.`,
+          level: 'success',
+        });
       }
     } catch (error) {
       console.error('Error uploading file:', error);
       toast.error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'upload' });
+      emitNotification({
+        title: 'Chat Upload Failed',
+        message: error instanceof Error ? error.message : 'Unknown upload error',
+        level: 'error',
+      });
     }
 
     // Reset file input

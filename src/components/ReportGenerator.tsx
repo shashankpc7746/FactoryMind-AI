@@ -7,6 +7,7 @@ import { Progress } from './ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { toast } from 'sonner';
 import * as api from '../services/api';
+import { emitNotification } from '../services/events';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend
@@ -306,6 +307,11 @@ export function ReportGenerator() {
 
       setReports((prev) => [report, ...prev]);
       toast.success('Report generated successfully');
+      emitNotification({
+        title: 'Report Generated',
+        message: report.title || 'New report is ready.',
+        level: 'success',
+      });
       
       // Auto-open the new report
       setTimeout(() => setSelectedReport(report), 500);
@@ -313,6 +319,11 @@ export function ReportGenerator() {
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error(`Failed to generate report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      emitNotification({
+        title: 'Report Generation Failed',
+        message: error instanceof Error ? error.message : 'Unknown report generation error',
+        level: 'error',
+      });
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -340,6 +351,11 @@ export function ReportGenerator() {
       document.body.removeChild(a);
       
       toast.success('PDF downloaded successfully', { id: 'pdf' });
+      emitNotification({
+        title: 'PDF Downloaded',
+        message: `${report.title}.pdf downloaded.`,
+        level: 'info',
+      });
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast.error(`Failed to download PDF: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'pdf' });
@@ -355,6 +371,11 @@ export function ReportGenerator() {
       await api.deleteReport(reportId);
       setReports((prev) => prev.filter((r) => r.id !== reportId));
       toast.success('Report deleted successfully');
+      emitNotification({
+        title: 'Report Deleted',
+        message: `Report ${reportId} removed.`,
+        level: 'info',
+      });
       
       // Close dialog if the deleted report was open
       if (selectedReport?.id === reportId) {

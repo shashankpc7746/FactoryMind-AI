@@ -89,6 +89,7 @@ export function Settings({
       title: 'Profile Updated',
       message: 'Your profile information has been saved.',
       level: 'success',
+      category: 'system',
     });
   };
 
@@ -120,6 +121,7 @@ export function Settings({
       title: 'Preferences Updated',
       message: 'Appearance and notification settings saved.',
       level: 'success',
+      category: 'system',
     });
     setSavingPreferences(false);
   };
@@ -137,6 +139,7 @@ export function Settings({
           title: 'All Data Reset',
           message: 'Documents, reports, and vectors were cleared.',
           level: 'warning',
+          category: 'system',
         });
       } catch (error) {
         toast.error(`Failed to reset data: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -144,6 +147,7 @@ export function Settings({
           title: 'Reset Failed',
           message: error instanceof Error ? error.message : 'Unknown reset error',
           level: 'error',
+          category: 'system',
         });
       } finally {
         setIsResetting(false);

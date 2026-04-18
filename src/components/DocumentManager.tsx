@@ -130,6 +130,7 @@ export function DocumentManager() {
         title: 'Document Indexed',
         message: `${file.name} is ready for Q&A.`,
         level: 'success',
+        category: 'documents',
       });
 
     } catch (error) {
@@ -139,6 +140,7 @@ export function DocumentManager() {
         title: 'Document Upload Failed',
         message: error instanceof Error ? error.message : 'Unknown upload error',
         level: 'error',
+        category: 'documents',
       });
     } finally {
       setUploading(false);
@@ -155,6 +157,7 @@ export function DocumentManager() {
         title: 'Document Deleted',
         message: `${filename} was removed from indexed documents.`,
         level: 'info',
+        category: 'documents',
       });
     } catch (error) {
       console.error('Delete error:', error);

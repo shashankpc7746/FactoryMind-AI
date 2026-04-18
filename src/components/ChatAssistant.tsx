@@ -125,6 +125,7 @@ export function ChatAssistant() {
           title: 'Document Indexed',
           message: `${file.name} uploaded from chat.`,
           level: 'success',
+          category: 'documents',
         });
       } else if (isDataFile) {
         toast.loading('Uploading data file...', { id: 'upload' });
@@ -143,6 +144,7 @@ export function ChatAssistant() {
           title: 'Data File Uploaded',
           message: `${file.name} is ready for report generation.`,
           level: 'success',
+          category: 'reports',
         });
       }
     } catch (error) {
@@ -152,6 +154,7 @@ export function ChatAssistant() {
         title: 'Chat Upload Failed',
         message: error instanceof Error ? error.message : 'Unknown upload error',
         level: 'error',
+        category: isPDF ? 'documents' : 'reports',
       });
     }
 

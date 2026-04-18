@@ -311,6 +311,7 @@ export function ReportGenerator() {
         title: 'Report Generated',
         message: report.title || 'New report is ready.',
         level: 'success',
+        category: 'reports',
       });
       
       // Auto-open the new report
@@ -323,6 +324,7 @@ export function ReportGenerator() {
         title: 'Report Generation Failed',
         message: error instanceof Error ? error.message : 'Unknown report generation error',
         level: 'error',
+        category: 'reports',
       });
     } finally {
       setUploading(false);
@@ -355,6 +357,7 @@ export function ReportGenerator() {
         title: 'PDF Downloaded',
         message: `${report.title}.pdf downloaded.`,
         level: 'info',
+        category: 'reports',
       });
     } catch (error) {
       console.error('Error downloading PDF:', error);
@@ -375,6 +378,7 @@ export function ReportGenerator() {
         title: 'Report Deleted',
         message: `Report ${reportId} removed.`,
         level: 'info',
+        category: 'reports',
       });
       
       // Close dialog if the deleted report was open

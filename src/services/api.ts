@@ -3,10 +3,19 @@
  * Handles all backend communication for FactoryMind AI
  */
 
-function resolveApiBaseUrl() {
+function normalizeBaseUrl(url: string) {
+  return url.replace(/\/$/, '');
+}
+
+function uniqueUrls(urls: string[]) {
+  return Array.from(new Set(urls.map(normalizeBaseUrl).filter(Boolean)));
+}
+
+function resolveApiBaseUrls() {
+  const candidates: string[] = [];
   const configured = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
   if (configured) {
-    return configured.replace(/\/$/, '');
+    candidates.push(configured);
   }
 
   if (typeof window !== 'undefined') {
@@ -14,26 +23,33 @@ function resolveApiBaseUrl() {
 
     // Local development fallback.
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8000';
+      candidates.push('http://localhost:8000');
+      return uniqueUrls(candidates);
     }
 
     // Render convention fallback: <frontend>.onrender.com -> <frontend>-backend.onrender.com
     if (hostname.endsWith('.onrender.com')) {
       const serviceName = hostname.replace('.onrender.com', '');
       if (serviceName.endsWith('-backend')) {
-        return origin;
+        candidates.push(origin);
+      } else {
+        candidates.push(`${protocol}//${serviceName}-backend.onrender.com`);
       }
-      return `${protocol}//${serviceName}-backend.onrender.com`;
+
+      // Explicit service fallback for this deployment.
+      candidates.push('https://factorymind-ai-backend.onrender.com');
     }
 
     // Same-origin fallback for reverse proxy style deployments.
-    return origin;
+    candidates.push(origin);
   }
 
-  return 'http://localhost:8000';
+  candidates.push('http://localhost:8000');
+  return uniqueUrls(candidates);
 }
 
-export const API_BASE_URL = resolveApiBaseUrl();
+export const API_BASE_URLS = resolveApiBaseUrls();
+export const API_BASE_URL = API_BASE_URLS[0];
 
 function isNetworkError(error: unknown): boolean {
   return error instanceof TypeError;
@@ -44,31 +60,47 @@ function wait(ms: number) {
 }
 
 async function apiRequest(path: string, init: RequestInit, fallbackError: string): Promise<Response> {
-  const url = `${API_BASE_URL}${path}`;
+  let lastError: Error | null = null;
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const response = await fetch(url, init);
-      if (!response.ok) {
+  for (const baseUrl of API_BASE_URLS) {
+    const url = `${baseUrl}${path}`;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const response = await fetch(url, init);
+        if (response.ok) {
+          return response;
+        }
+
+        // Continue trying next base URL for typical wrong-host symptoms.
+        if ([404, 405, 502, 503, 504].includes(response.status)) {
+          lastError = new Error(await parseErrorMessage(response, fallbackError));
+          break;
+        }
+
         throw new Error(await parseErrorMessage(response, fallbackError));
-      }
-      return response;
-    } catch (error) {
-      const shouldRetry = isNetworkError(error) && attempt === 0;
-      if (shouldRetry) {
-        await wait(1200);
-        continue;
-      }
+      } catch (error) {
+        const shouldRetry = isNetworkError(error) && attempt === 0;
+        if (shouldRetry) {
+          await wait(1200);
+          continue;
+        }
 
-      if (isNetworkError(error)) {
-        throw new Error(`Unable to connect to API at ${API_BASE_URL}. Check backend URL/CORS/deployment status.`);
-      }
+        if (isNetworkError(error)) {
+          lastError = new Error(`Unable to connect to API at ${baseUrl}`);
+          break;
+        }
 
-      throw error;
+        throw error;
+      }
     }
   }
 
-  throw new Error(fallbackError);
+  if (lastError) {
+    throw new Error(`${lastError.message}. Tried: ${API_BASE_URLS.join(', ')}`);
+  }
+
+  throw new Error(`${fallbackError}. No API base URL candidates available.`);
 }
 
 async function parseErrorMessage(response: Response, fallback: string): Promise<string> {

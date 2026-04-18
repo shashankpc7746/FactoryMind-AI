@@ -27,6 +27,38 @@ interface HeaderProps {
 }
 
 export function Header({ title, onNavigate, userName }: HeaderProps) {
+  const isNotificationAllowed = (payload: AppNotificationPayload) => {
+    try {
+      const raw = localStorage.getItem('userPreferences');
+      if (!raw) return true;
+
+      const parsed = JSON.parse(raw) as {
+        notifications?: {
+          documentIndexingComplete?: boolean;
+          reportGenerationComplete?: boolean;
+          systemUpdates?: boolean;
+        };
+      };
+
+      const prefs = parsed.notifications;
+      if (!prefs) return true;
+
+      if (payload.category === 'documents') {
+        return prefs.documentIndexingComplete !== false;
+      }
+      if (payload.category === 'reports') {
+        return prefs.reportGenerationComplete !== false;
+      }
+      if (payload.category === 'system') {
+        return prefs.systemUpdates !== false;
+      }
+
+      return true;
+    } catch {
+      return true;
+    }
+  };
+
   const [searchValue, setSearchValue] = useState('');
   const [notifications, setNotifications] = useState<Array<{
     id: string;
@@ -56,6 +88,7 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
       const customEvent = event as CustomEvent<AppNotificationPayload>;
       const detail = customEvent.detail;
       if (!detail) return;
+      if (!isNotificationAllowed(detail)) return;
 
       const timestamp = new Date();
       const next = {

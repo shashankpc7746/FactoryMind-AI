@@ -120,18 +120,28 @@ export function DocumentManager() {
         fileName: file.name,
         type: 'PDF',
         uploadDate: new Date(),
-        status: 'indexed',
+        status: result.status === 'processing' ? 'processing' : 'indexed',
         size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
       };
       
       setDocuments((prev) => [newDoc, ...prev]);
-      toast.success(`Document indexed successfully (${result.details?.chunks} chunks, ${result.details?.pages} pages)`);
-      emitNotification({
-        title: 'Document Indexed',
-        message: `${file.name} is ready for Q&A.`,
-        level: 'success',
-        category: 'documents',
-      });
+      if (result.status === 'processing') {
+        toast.success(`Document upload started. Indexing ${file.name} in the background.`);
+        emitNotification({
+          title: 'Document Upload Started',
+          message: `${file.name} is being indexed in the background.`,
+          level: 'info',
+          category: 'documents',
+        });
+      } else {
+        toast.success(`Document indexed successfully (${result.details?.chunks} chunks, ${result.details?.pages} pages)`);
+        emitNotification({
+          title: 'Document Indexed',
+          message: `${file.name} is ready for Q&A.`,
+          level: 'success',
+          category: 'documents',
+        });
+      }
 
     } catch (error) {
       console.error('Upload error:', error);

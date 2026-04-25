@@ -110,14 +110,20 @@ export function ChatAssistant() {
     try {
       if (isPDF) {
         toast.loading('Uploading and indexing document...', { id: 'upload' });
-        await api.uploadDocument(file);
-        toast.success('✓ Document indexed successfully', { id: 'upload' });
+        const result = await api.uploadDocument(file);
+        if (result.status === 'processing') {
+          toast.success('✓ Document upload started', { id: 'upload' });
+        } else {
+          toast.success('✓ Document indexed successfully', { id: 'upload' });
+        }
         
         // Add system message
         const systemMessage: Message = {
           id: Date.now().toString(),
           role: 'assistant',
-          content: `Document "${file.name}" has been successfully uploaded and indexed. You can now ask questions about its contents.`,
+          content: result.status === 'processing'
+            ? `Document "${file.name}" has been uploaded and is currently being indexed. You can keep using the app while it finishes in the background.`
+            : `Document "${file.name}" has been successfully uploaded and indexed. You can now ask questions about its contents.`,
           timestamp: new Date(),
         };
         setMessages((prev: Message[]) => [...prev, systemMessage]);

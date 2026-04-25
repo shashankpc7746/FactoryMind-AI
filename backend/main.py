@@ -19,7 +19,7 @@ os.environ['HF_HUB_DOWNLOAD_TIMEOUT'] = '600'  # 10 minutes for model download
 os.environ['REQUESTS_TIMEOUT'] = '600'
 os.environ['HF_HUB_ETAG_TIMEOUT'] = '600'
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
@@ -157,6 +157,27 @@ async def global_exception_handler(request, exc):
 # API ENDPOINTS
 # ============================================================================
 
+
+def _process_document_background(file_path: str, filename: str, started_at: datetime) -> None:
+    """Index a saved document without blocking the upload response."""
+    try:
+        if not rag_engine:
+            logger.error(f"Document engine unavailable for background indexing: {filename}")
+            return
+
+        result = rag_engine.ingest_document(file_path, filename)
+        elapsed = (datetime.now() - started_at).total_seconds()
+        logger.info(
+            f"Background indexing complete for {filename} in {elapsed:.1f}s: "
+            f"{result.get('chunks', 0)} chunks"
+        )
+    except Exception as error:
+        logger.error(f"Background indexing failed for {filename}: {error}", exc_info=True)
+        try:
+            Path(file_path).unlink(missing_ok=True)
+        except Exception:
+            pass
+
 @app.get("/")
 async def root():
     """Health check endpoint."""
@@ -195,7 +216,7 @@ async def health_check():
 # ============================================================================
 
 @app.post("/upload/document", response_model=UploadResponse)
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     """
     Upload and index a PDF document.
     
@@ -205,8 +226,6 @@ async def upload_document(file: UploadFile = File(...)):
     Returns:
         Upload status and metadata
     """
-    start_time = datetime.now()
-    
     try:
         if not rag_engine:
             raise HTTPException(status_code=503, detail="Document engine is unavailable")
@@ -235,33 +254,22 @@ async def upload_document(file: UploadFile = File(...)):
             buffer.write(file_bytes)
         
         logger.info(f"Saved document: {file.filename}")
-        
-        try:
-            # Ingest and index document
-            result = rag_engine.ingest_document(str(file_path), file.filename)
-            elapsed = (datetime.now() - start_time).total_seconds()
-            logger.info(f"Successfully indexed {file.filename} in {elapsed:.1f}s: {result.get('chunks', 0)} chunks")
-            
-            return UploadResponse(
-                status="success",
-                filename=file.filename,
-                message=f"Document uploaded and indexed successfully",
-                details={
-                    "chunks": result['chunks'],
-                    "pages": result['pages']
-                }
-            )
-        except Exception as ingest_error:
-            # Log detailed error but clean up file
-            logger.error(f"Error ingesting document {file.filename}: {str(ingest_error)}", exc_info=True)
-            try:
-                file_path.unlink()
-            except:
-                pass
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to process document: {str(ingest_error)}"
-            )
+
+        background_tasks.add_task(
+            _process_document_background,
+            str(file_path),
+            file.filename,
+            datetime.now()
+        )
+
+        return UploadResponse(
+            status="processing",
+            filename=file.filename,
+            message="Document uploaded and is being indexed in the background",
+            details={
+                "processing": True
+            }
+        )
     
     except HTTPException:
         raise

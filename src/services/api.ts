@@ -59,7 +59,12 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function apiRequest(path: string, init: RequestInit, fallbackError: string): Promise<Response> {
+async function apiRequest(
+  path: string,
+  init: RequestInit,
+  fallbackError: string,
+  timeoutMs: number = 30000
+): Promise<Response> {
   let lastError: Error | null = null;
 
   for (const baseUrl of API_BASE_URLS) {
@@ -67,19 +72,37 @@ async function apiRequest(path: string, init: RequestInit, fallbackError: string
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        const response = await fetch(url, init);
-        if (response.ok) {
-          return response;
-        }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-        // Continue trying next base URL for typical wrong-host symptoms.
-        if ([404, 405, 502, 503, 504].includes(response.status)) {
-          lastError = new Error(await parseErrorMessage(response, fallbackError));
+        try {
+          const response = await fetch(url, {
+            ...init,
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            return response;
+          }
+
+          // Continue trying next base URL for typical wrong-host symptoms.
+          if ([404, 405, 502, 503, 504].includes(response.status)) {
+            lastError = new Error(await parseErrorMessage(response, fallbackError));
+            break;
+          }
+
+          throw new Error(await parseErrorMessage(response, fallbackError));
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          lastError = new Error(`Request timeout (${timeoutMs}ms). Endpoint took too long to respond.`);
           break;
         }
 
-        throw new Error(await parseErrorMessage(response, fallbackError));
-      } catch (error) {
         const shouldRetry = isNetworkError(error) && attempt === 0;
         if (shouldRetry) {
           await wait(1200);
@@ -176,10 +199,11 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
+  // Use 10-minute timeout for document uploads (model loading takes time)
   const response = await apiRequest('/upload/document', {
     method: 'POST',
     body: formData,
-  }, 'Failed to upload document');
+  }, 'Failed to upload document', 600000);
 
   return response.json();
 }
@@ -191,10 +215,11 @@ export async function uploadDataFile(file: File): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
+  // Use 5-minute timeout for data file uploads
   const response = await apiRequest('/upload/data', {
     method: 'POST',
     body: formData,
-  }, 'Failed to upload data file');
+  }, 'Failed to upload data file', 300000);
 
   return response.json();
 }

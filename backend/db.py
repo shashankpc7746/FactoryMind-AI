@@ -10,6 +10,7 @@ from pathlib import Path
 import logging
 import time
 import numpy as np
+from huggingface_hub import snapshot_download
 
 from langchain.schema import Document
 
@@ -63,8 +64,42 @@ class VectorDBHandler:
         _ensure_faiss_loaded()
         logger.info("Loading sentence-transformers model (first use)...")
         try:
+            model_id = "sentence-transformers/all-MiniLM-L6-v2"
+
+            # Download only the files needed for PyTorch inference.
+            # This avoids pulling large ONNX/OpenVINO artifacts that can trigger
+            # long cold starts or process restarts on small instances.
+            local_model_path = snapshot_download(
+                repo_id=model_id,
+                cache_dir="./hf_cache",
+                allow_patterns=[
+                    "config.json",
+                    "config_sentence_transformers.json",
+                    "modules.json",
+                    "README.md",
+                    "sentence_bert_config.json",
+                    "special_tokens_map.json",
+                    "tokenizer.json",
+                    "tokenizer_config.json",
+                    "vocab.txt",
+                    "pytorch_model.bin",
+                    "1_Pooling/*",
+                ],
+                ignore_patterns=[
+                    "*.onnx",
+                    "openvino/*",
+                    "*.safetensors",
+                    "*.h5",
+                    "*.ot",
+                    "*.msgpack",
+                    "rust_model.ot",
+                    "tf_model.h5",
+                    "flax_model.msgpack",
+                ],
+            )
+
             self.embeddings = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-MiniLM-L6-v2",
+                model_name=local_model_path,
                 model_kwargs={"device": "cpu"},
                 cache_folder="./hf_cache"
             )

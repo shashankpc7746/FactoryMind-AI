@@ -141,6 +141,26 @@ async function parseErrorMessage(response: Response, fallback: string): Promise<
   }
 }
 
+async function safeParseJson<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get('content-type') || '';
+  
+  if (!contentType.includes('application/json')) {
+    const text = await response.text();
+    throw new Error(`Expected JSON response but got ${contentType || 'text'}. Response: ${text.substring(0, 200)}`);
+  }
+
+  const text = await response.text();
+  if (!text || text.trim().length === 0) {
+    throw new Error('Backend returned empty response body');
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (err) {
+    throw new Error(`Failed to parse backend response: ${text.substring(0, 300)}`);
+  }
+}
+
 export interface QueryRequest {
   question: string;
 }
@@ -199,13 +219,20 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
-  // Use 10-minute timeout for document uploads (model loading takes time)
-  const response = await apiRequest('/upload/document', {
-    method: 'POST',
-    body: formData,
-  }, 'Failed to upload document', 600000);
+  try {
+    // Use 10-minute timeout for document uploads (model loading takes time)
+    const response = await apiRequest('/upload/document', {
+      method: 'POST',
+      body: formData,
+    }, 'Failed to upload document', 600000);
 
-  return response.json();
+    return await safeParseJson<UploadResponse>(response);
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Document upload failed: ${error.message}`);
+    }
+    throw error;
+  }
 }
 
 /**
@@ -215,13 +242,20 @@ export async function uploadDataFile(file: File): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
-  // Use 5-minute timeout for data file uploads
-  const response = await apiRequest('/upload/data', {
-    method: 'POST',
-    body: formData,
-  }, 'Failed to upload data file', 300000);
+  try {
+    // Use 5-minute timeout for data file uploads
+    const response = await apiRequest('/upload/data', {
+      method: 'POST',
+      body: formData,
+    }, 'Failed to upload data file', 300000);
 
-  return response.json();
+    return await safeParseJson<UploadResponse>(response);
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Data file upload failed: ${error.message}`);
+    }
+    throw error;
+  }
 }
 
 /**
@@ -236,7 +270,7 @@ export async function queryDocuments(question: string): Promise<QueryResponse> {
     body: JSON.stringify({ question }),
   }, 'Failed to query documents');
 
-  return response.json();
+  return safeParseJson<QueryResponse>(response);
 }
 
 /**
@@ -251,7 +285,7 @@ export async function generateReport(file: File): Promise<Report> {
     body: formData,
   }, 'Failed to generate report');
 
-  return response.json();
+  return safeParseJson<Report>(response);
 }
 
 /**
@@ -260,7 +294,7 @@ export async function generateReport(file: File): Promise<Report> {
 export async function listDocuments(): Promise<{ documents: Document[]; count: number }> {
   const response = await apiRequest('/documents', { method: 'GET' }, 'Failed to fetch documents');
 
-  return response.json();
+  return safeParseJson<{ documents: Document[]; count: number }>(response);
 }
 
 /**
@@ -280,7 +314,7 @@ export async function clearAllData(): Promise<{ status: string; message: string 
     method: 'DELETE',
   }, 'Failed to clear all data');
 
-  return response.json();
+  return safeParseJson<{ status: string; message: string }>(response);
 }
 
 /**
@@ -289,7 +323,7 @@ export async function clearAllData(): Promise<{ status: string; message: string 
 export async function listReports(): Promise<{ reports: Report[]; count: number; data?: Report[] }> {
   const response = await apiRequest('/reports', { method: 'GET' }, 'Failed to fetch reports');
 
-  return response.json();
+  return safeParseJson<{ reports: Report[]; count: number; data?: Report[] }>(response);
 }
 
 /**
@@ -298,7 +332,7 @@ export async function listReports(): Promise<{ reports: Report[]; count: number;
 export async function getReport(reportId: string): Promise<Report> {
   const response = await apiRequest(`/reports/${reportId}`, { method: 'GET' }, 'Failed to fetch report');
 
-  return response.json();
+  return safeParseJson<Report>(response);
 }
 
 /**
@@ -325,7 +359,7 @@ export async function deleteReport(reportId: string): Promise<void> {
 export async function getHistory() {
   const response = await apiRequest('/history', { method: 'GET' }, 'Failed to fetch history');
 
-  return response.json();
+  return safeParseJson<any>(response);
 }
 
 /**
@@ -333,5 +367,5 @@ export async function getHistory() {
  */
 export async function healthCheck() {
   const response = await apiRequest('/health', { method: 'GET' }, 'Health check failed');
-  return response.json();
+  return safeParseJson<any>(response);
 }

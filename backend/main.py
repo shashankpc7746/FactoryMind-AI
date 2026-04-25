@@ -138,6 +138,21 @@ class ReportResponse(BaseModel):
     charts: Optional[List[dict]] = None
 
 
+# Global exception handler to catch any unhandled exceptions
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """Catch-all exception handler to ensure all errors return valid JSON."""
+    logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "message": f"Internal server error: {str(exc)}",
+            "detail": str(exc)
+        }
+    )
+
+
 # ============================================================================
 # API ENDPOINTS
 # ============================================================================
@@ -190,6 +205,8 @@ async def upload_document(file: UploadFile = File(...)):
     Returns:
         Upload status and metadata
     """
+    start_time = datetime.now()
+    
     try:
         if not rag_engine:
             raise HTTPException(status_code=503, detail="Document engine is unavailable")
@@ -219,23 +236,37 @@ async def upload_document(file: UploadFile = File(...)):
         
         logger.info(f"Saved document: {file.filename}")
         
-        # Ingest and index document
-        result = rag_engine.ingest_document(str(file_path), file.filename)
-        
-        return UploadResponse(
-            status="success",
-            filename=file.filename,
-            message=f"Document uploaded and indexed successfully",
-            details={
-                "chunks": result['chunks'],
-                "pages": result['pages']
-            }
-        )
+        try:
+            # Ingest and index document
+            result = rag_engine.ingest_document(str(file_path), file.filename)
+            elapsed = (datetime.now() - start_time).total_seconds()
+            logger.info(f"Successfully indexed {file.filename} in {elapsed:.1f}s: {result.get('chunks', 0)} chunks")
+            
+            return UploadResponse(
+                status="success",
+                filename=file.filename,
+                message=f"Document uploaded and indexed successfully",
+                details={
+                    "chunks": result['chunks'],
+                    "pages": result['pages']
+                }
+            )
+        except Exception as ingest_error:
+            # Log detailed error but clean up file
+            logger.error(f"Error ingesting document {file.filename}: {str(ingest_error)}", exc_info=True)
+            try:
+                file_path.unlink()
+            except:
+                pass
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to process document: {str(ingest_error)}"
+            )
     
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error uploading document: {str(e)}")
+        logger.error(f"Error uploading document: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

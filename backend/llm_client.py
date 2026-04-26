@@ -170,44 +170,39 @@ Format your response as JSON with keys: summary, key_metrics, observations, reco
             # Try to parse JSON response
             import json
             import re
+            report_data = None
+
+            # Strategy 1: Direct JSON parse
             try:
-                # Try direct JSON parse first
                 report_data = json.loads(response)
                 logger.info("Successfully parsed response as direct JSON")
-            except Exception as e:
-                logger.warning(f"Direct JSON parse failed: {str(e)[:100]}")
-                # Try to extract JSON from markdown code blocks
-                json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response, re.DOTALL)
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Strategy 2: Strip markdown ```json ... ``` fences (most common LLM format)
+            if report_data is None:
+                stripped = re.sub(r'^```(?:json)?\s*', '', response.strip())
+                stripped = re.sub(r'\s*```\s*$', '', stripped)
+                try:
+                    report_data = json.loads(stripped)
+                    logger.info("Successfully parsed JSON after stripping markdown fences")
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
+            # Strategy 3: Extract the largest {...} block (greedy)
+            if report_data is None:
+                json_match = re.search(r'\{.*\}', response, re.DOTALL)
                 if json_match:
                     try:
-                        report_data = json.loads(json_match.group(1))
-                        logger.info("Successfully extracted JSON from markdown code block")
-                    except:
-                        # Extract JSON without code blocks
-                        json_match = re.search(r'\{.*\}', response, re.DOTALL)
-                        if json_match:
-                            try:
-                                report_data = json.loads(json_match.group(0))
-                                logger.info("Successfully extracted JSON from response body")
-                            except:
-                                logger.warning("All JSON parsing attempts failed, using fallback")
-                                report_data = self._structure_fallback_report(response, data_summary)
-                        else:
-                            logger.warning("No JSON found in response, using fallback")
-                            report_data = self._structure_fallback_report(response, data_summary)
-                else:
-                    # Try to find JSON object in the response
-                    json_match = re.search(r'\{.*\}', response, re.DOTALL)
-                    if json_match:
-                        try:
-                            report_data = json.loads(json_match.group(0))
-                            logger.info("Successfully extracted JSON from response (fallback regex)")
-                        except:
-                            logger.warning("Fallback JSON extraction failed, using structured fallback")
-                            report_data = self._structure_fallback_report(response, data_summary)
-                    else:
-                        logger.warning("No JSON pattern found, using structured fallback")
-                        report_data = self._structure_fallback_report(response, data_summary)
+                        report_data = json.loads(json_match.group(0))
+                        logger.info("Successfully extracted JSON via greedy regex")
+                    except (json.JSONDecodeError, ValueError):
+                        pass
+
+            # Strategy 4: Structured fallback — always produces valid output
+            if report_data is None:
+                logger.debug("JSON extraction unsuccessful, using structured fallback")
+                report_data = self._structure_fallback_report(response, data_summary)
             
             logger.info(f"Report parsing complete. Keys: {list(report_data.keys())}")
             return report_data

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 import logging
 import json
+import warnings
 
 import pandas as pd
 import numpy as np
@@ -275,7 +276,9 @@ class ReportEngine:
                 col_lower = col.lower()
                 if any(keyword in col_lower for keyword in ['date', 'time', 'timestamp', 'day', 'month', 'year']):
                     try:
-                        pd.to_datetime(df[col])
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", UserWarning)
+                            pd.to_datetime(df[col])
                         date_col = col
                         break
                     except Exception:
@@ -286,7 +289,9 @@ class ReportEngine:
                 for col in df.columns:
                     if df[col].dtype == 'object':
                         try:
-                            pd.to_datetime(df[col])
+                            with warnings.catch_warnings():
+                                warnings.simplefilter("ignore", UserWarning)
+                                pd.to_datetime(df[col])
                             date_col = col
                             break
                         except Exception:
@@ -297,7 +302,9 @@ class ReportEngine:
             
             # Sort by date and select up to 3 numeric columns for the trend
             df_sorted = df.copy()
-            df_sorted[date_col] = pd.to_datetime(df_sorted[date_col])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                df_sorted[date_col] = pd.to_datetime(df_sorted[date_col])
             df_sorted = df_sorted.sort_values(date_col)
             
             # If too many rows, aggregate by date

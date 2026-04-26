@@ -54,6 +54,10 @@ class ONNXMiniLMEmbeddings(Embeddings):
                         the ONNX model file and tokenizer files.
         """
         import onnxruntime as ort
+
+        # Suppress "None of PyTorch, TensorFlow >= 2.0, or Flax have been found"
+        # warning — we only need the tokenizer, not a deep-learning backend.
+        os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
         from transformers import AutoTokenizer
 
         # Limit ONNX Runtime to 2 threads to conserve memory

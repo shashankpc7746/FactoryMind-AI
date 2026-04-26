@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Optional, Union
 from datetime import datetime
 import logging
+import gc
 from dotenv import load_dotenv
 import math
 
@@ -18,6 +19,8 @@ load_dotenv(Path(__file__).parent.parent / '.env')
 os.environ['HF_HUB_DOWNLOAD_TIMEOUT'] = '600'  # 10 minutes for model download
 os.environ['REQUESTS_TIMEOUT'] = '600'
 os.environ['HF_HUB_ETAG_TIMEOUT'] = '600'
+# Prevent OpenMP crash when both ONNX Runtime and FAISS load their own OpenMP
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -177,6 +180,9 @@ def _process_document_background(file_path: str, filename: str, started_at: date
             Path(file_path).unlink(missing_ok=True)
         except Exception:
             pass
+    finally:
+        # Free transient memory from PDF parsing and embedding
+        gc.collect()
 
 @app.get("/")
 async def root():

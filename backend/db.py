@@ -1,9 +1,14 @@
 """
 Vector Database Handler
 Manages FAISS vector store operations for document embeddings.
+
+Uses ONNX Runtime for lightweight embeddings (~50MB RAM) instead of
+full PyTorch + sentence-transformers (~250MB RAM) — critical for
+512MB RAM environments like Render free tier.
 """
 
 import os
+import gc
 import pickle
 from typing import List, Dict, Tuple
 from pathlib import Path
@@ -13,23 +18,132 @@ import numpy as np
 from huggingface_hub import snapshot_download
 
 from langchain.schema import Document
+from langchain.embeddings.base import Embeddings
 
 # Lazy imports - loaded on first use to avoid DLL issues at startup
 FAISS = None
-HuggingFaceEmbeddings = None
 
 def _ensure_faiss_loaded():
-    """Lazy load FAISS and HuggingFaceEmbeddings."""
-    global FAISS, HuggingFaceEmbeddings
+    """Lazy load FAISS."""
+    global FAISS
     if FAISS is None:
         from langchain_community.vectorstores import FAISS as _FAISS
         FAISS = _FAISS
-    if HuggingFaceEmbeddings is None:
-        from langchain_community.embeddings import HuggingFaceEmbeddings as _HFE
-        HuggingFaceEmbeddings = _HFE
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+class ONNXMiniLMEmbeddings(Embeddings):
+    """
+    Lightweight embeddings using ONNX Runtime instead of PyTorch.
+
+    Loads the all-MiniLM-L6-v2 model via ONNX (~30MB model file)
+    instead of PyTorch (~91MB weights + ~150MB PyTorch runtime).
+    
+    Saves ~150-200MB RAM compared to HuggingFaceEmbeddings — the
+    difference between crashing and running on Render's 512MB free tier.
+    """
+
+    def __init__(self, model_path: str):
+        """
+        Initialize ONNX embeddings.
+        
+        Args:
+            model_path: Path to the downloaded model directory containing
+                        the ONNX model file and tokenizer files.
+        """
+        import onnxruntime as ort
+        from transformers import AutoTokenizer
+
+        # Limit ONNX Runtime to 2 threads to conserve memory
+        sess_options = ort.SessionOptions()
+        sess_options.intra_op_num_threads = 2
+        sess_options.inter_op_num_threads = 2
+        sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+
+        onnx_path = os.path.join(model_path, "model.onnx")
+        if not os.path.exists(onnx_path):
+            # Fallback: check for onnx subfolder
+            onnx_subdir = os.path.join(model_path, "onnx")
+            if os.path.isdir(onnx_subdir):
+                onnx_path = os.path.join(onnx_subdir, "model.onnx")
+
+        if not os.path.exists(onnx_path):
+            raise FileNotFoundError(
+                f"ONNX model not found at {onnx_path}. "
+                "Make sure the model was downloaded with the ONNX variant."
+            )
+
+        self._session = ort.InferenceSession(onnx_path, sess_options, providers=["CPUExecutionProvider"])
+        self._tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+        logger.info("ONNX MiniLM embeddings loaded successfully")
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _mean_pooling(self, model_output: np.ndarray, attention_mask: np.ndarray) -> np.ndarray:
+        """Apply mean pooling to token embeddings (same as sentence-transformers)."""
+        # model_output shape: (batch, seq_len, hidden_dim)
+        mask_expanded = np.expand_dims(attention_mask, axis=-1).astype(np.float32)
+        sum_embeddings = np.sum(model_output * mask_expanded, axis=1)
+        sum_mask = np.clip(mask_expanded.sum(axis=1), a_min=1e-9, a_max=None)
+        return sum_embeddings / sum_mask
+
+    def _normalize(self, embeddings: np.ndarray) -> np.ndarray:
+        """L2-normalize embeddings."""
+        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+        norms = np.clip(norms, a_min=1e-9, a_max=None)
+        return embeddings / norms
+
+    def _embed(self, texts: List[str]) -> List[List[float]]:
+        """Run ONNX inference and return normalized embeddings."""
+        encoded = self._tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            max_length=256,
+            return_tensors="np",
+        )
+
+        input_ids = encoded["input_ids"].astype(np.int64)
+        attention_mask = encoded["attention_mask"].astype(np.int64)
+
+        # Some ONNX exports expect token_type_ids
+        feeds = {"input_ids": input_ids, "attention_mask": attention_mask}
+        input_names = [inp.name for inp in self._session.get_inputs()]
+        if "token_type_ids" in input_names:
+            feeds["token_type_ids"] = np.zeros_like(input_ids)
+
+        outputs = self._session.run(None, feeds)
+        # outputs[0] is the last_hidden_state (batch, seq_len, hidden)
+        token_embeddings = outputs[0]
+
+        pooled = self._mean_pooling(token_embeddings, encoded["attention_mask"].astype(np.float32))
+        normalized = self._normalize(pooled)
+        return normalized.tolist()
+
+    # ------------------------------------------------------------------
+    # LangChain Embeddings interface
+    # ------------------------------------------------------------------
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """Embed a list of documents (chunks). Processes in small batches to save memory."""
+        all_embeddings: List[List[float]] = []
+        batch_size = 16  # Small batches to limit peak memory
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i : i + batch_size]
+            all_embeddings.extend(self._embed(batch))
+            # Free intermediate memory between batches
+            if i + batch_size < len(texts):
+                gc.collect()
+        return all_embeddings
+
+    def embed_query(self, text: str) -> List[float]:
+        """Embed a single query string."""
+        return self._embed([text])[0]
 
 
 class VectorDBHandler:
@@ -62,52 +176,45 @@ class VectorDBHandler:
             return
         
         _ensure_faiss_loaded()
-        logger.info("Loading sentence-transformers model (first use)...")
+        logger.info("Loading ONNX embeddings model (first use)...")
         try:
             model_id = "sentence-transformers/all-MiniLM-L6-v2"
 
-            # Download only the files needed for PyTorch inference.
-            # This avoids pulling large ONNX/OpenVINO artifacts that can trigger
-            # long cold starts or process restarts on small instances.
+            # Download the ONNX variant of the model — much lighter than PyTorch.
+            # We need: tokenizer files + the ONNX model file.
             local_model_path = snapshot_download(
                 repo_id=model_id,
                 cache_dir="./hf_cache",
                 allow_patterns=[
                     "config.json",
-                    "config_sentence_transformers.json",
-                    "modules.json",
-                    "README.md",
-                    "sentence_bert_config.json",
-                    "special_tokens_map.json",
                     "tokenizer.json",
                     "tokenizer_config.json",
+                    "special_tokens_map.json",
                     "vocab.txt",
-                    "pytorch_model.bin",
-                    "1_Pooling/*",
+                    "onnx/model.onnx",       # ONNX model (~30MB)
                 ],
                 ignore_patterns=[
-                    "*.onnx",
-                    "openvino/*",
-                    "*.safetensors",
+                    "pytorch_model.bin",      # Skip PyTorch weights (~91MB)
+                    "model.safetensors",
                     "*.h5",
                     "*.ot",
                     "*.msgpack",
                     "rust_model.ot",
                     "tf_model.h5",
                     "flax_model.msgpack",
+                    "openvino/*",
                 ],
             )
 
-            self.embeddings = HuggingFaceEmbeddings(
-                model_name=local_model_path,
-                model_kwargs={"device": "cpu"},
-                cache_folder="./hf_cache"
-            )
+            self.embeddings = ONNXMiniLMEmbeddings(model_path=local_model_path)
             self._embeddings_loaded = True
-            logger.info("Successfully loaded sentence-transformers model")
+            logger.info("Successfully loaded ONNX embeddings model")
             
             # Now try to load existing vector store if it exists
             self._load_vector_store()
+
+            # Free download artifacts from memory
+            gc.collect()
         except Exception as e:
             logger.error(f"Error loading embeddings model: {e}")
             raise
@@ -164,6 +271,9 @@ class VectorDBHandler:
             
             # Save the updated vector store
             self._save_vector_store()
+
+            # Explicit GC to free embedding intermediates
+            gc.collect()
             
         except Exception as e:
             logger.error(f"Error adding documents to vector store: {str(e)}")

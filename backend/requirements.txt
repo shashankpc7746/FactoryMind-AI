@@ -13,10 +13,12 @@ langchain==0.1.16
 langchain-community==0.0.38
 requests==2.31.0
 huggingface-hub==0.20.3  # For downloading models
-sentence-transformers==2.2.2  # For local embeddings (no API needed!)
-transformers==4.40.2
+transformers==4.40.2  # For tokenizer only (no PyTorch needed)
 tokenizers==0.19.1
 # langchain-openai==0.0.8  # Replaced with Groq (free)
+
+# Lightweight Embeddings (ONNX Runtime replaces PyTorch — saves ~150MB RAM)
+onnxruntime==1.17.0
 
 # Vector Database
 faiss-cpu==1.9.0.post1  # Updated for Python 3.10+ compatibility
@@ -41,7 +43,3 @@ python-dotenv==1.0.1
 pydantic==2.6.1
 pydantic-settings==2.1.0
 wheel==0.45.1
-
-# PyTorch (CPU-only for embeddings)
---extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.2.2+cpu

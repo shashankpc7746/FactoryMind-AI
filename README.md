@@ -55,7 +55,8 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 - **FastAPI** - High-performance Python web framework
 - **LangChain** - For RAG pipeline and document processing
 - **FAISS** - Facebook's vector database for similarity search
-- **HuggingFace** - For text embeddings
+- **ONNX Runtime** - Lightweight embeddings inference (~50MB RAM vs ~250MB with PyTorch)
+- **HuggingFace** - Model hosting and tokenizers
 - **Groq API** - Lightning-fast LLM inference
 - **Pandas & NumPy** - Data analysis and manipulation
 - **ReportLab** - PDF report generation
@@ -122,7 +123,9 @@ You should see `(fact-ai)` appear in your terminal prompt, indicating the virtua
 pip install -r requirements.txt
 ```
 
-This will install FastAPI, LangChain, FAISS, and all other dependencies. It may take 2-3 minutes.
+This will install FastAPI, LangChain, FAISS, ONNX Runtime, and all other dependencies. It may take 2-3 minutes.
+
+> **Note:** The project uses ONNX Runtime instead of PyTorch for text embeddings. This keeps the memory footprint under 300MB — critical for free-tier hosting (512MB RAM).
 
 #### Configure Environment Variables
 
@@ -445,6 +448,10 @@ Render offers free hosting with automatic deployments from GitHub!
    - Free tier includes 750 hours/month
    - Backend may sleep after 15 minutes of inactivity (wakes on request)
 
+#### 💡 Memory Optimization for Free Tier
+
+The backend uses **ONNX Runtime** instead of PyTorch for text embeddings, keeping peak RAM under ~300MB — well within Render's 512MB free-tier limit. No special configuration is needed; the optimization is built into the codebase.
+
 #### Live URLs
 
 - **Backend:** `https://factorymind-ai-backend.onrender.com`
@@ -661,8 +668,9 @@ Sample images from [Unsplash](https://unsplash.com) used under their [free licen
 - **FastAPI** - Modern Python web framework
 - **LangChain** - Building applications with LLMs
 - **FAISS** - Facebook AI Similarity Search
+- **ONNX Runtime** - Lightweight ML inference
 - **Groq** - Ultra-fast LLM inference
-- **HuggingFace** - NLP models and embeddings
+- **HuggingFace** - NLP models and tokenizers
 - **React & TypeScript** - Modern web development
 - **Tailwind CSS** - Utility-first CSS framework
 - **Vite** - Next-generation frontend tooling

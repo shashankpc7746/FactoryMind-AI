@@ -111,28 +111,64 @@ export function ChatAssistant() {
       if (isPDF) {
         toast.loading('Uploading and indexing document...', { id: 'upload' });
         const result = await api.uploadDocument(file);
+
         if (result.status === 'processing') {
           toast.success('✓ Document upload started', { id: 'upload' });
+
+          // Show a "processing" message that we will update in-place once indexed.
+          const processingMsgId = Date.now().toString();
+          const processingMessage: Message = {
+            id: processingMsgId,
+            role: 'assistant',
+            content: `⏳ Document "${file.name}" has been uploaded and is currently being indexed. Please wait — I'll let you know when it's ready for questions.`,
+            timestamp: new Date(),
+          };
+          setMessages((prev: Message[]) => [...prev, processingMessage]);
+
+          // Poll for completion in the background and update the message.
+          api.pollUntilIndexed(file.name).then((status) => {
+            setMessages((prev: Message[]) =>
+              prev.map((msg) =>
+                msg.id === processingMsgId
+                  ? {
+                      ...msg,
+                      content:
+                        status.status === 'indexed'
+                          ? `✅ Document "${file.name}" has been indexed successfully (${status.chunks ?? 0} chunks). You can now ask questions about its contents.`
+                          : `❌ Document "${file.name}" failed to index: ${status.error || 'Unknown error'}. Please try uploading again.`,
+                    }
+                  : msg
+              )
+            );
+            if (status.status === 'indexed') {
+              toast.success(`${file.name} is ready for Q&A`, { id: `indexed-${file.name}` });
+            } else {
+              toast.error(`Indexing failed for ${file.name}`, { id: `indexed-${file.name}` });
+            }
+          });
+
+          emitNotification({
+            title: 'Document Indexing Started',
+            message: `${file.name} is being indexed in the background.`,
+            level: 'info',
+            category: 'documents',
+          });
         } else {
           toast.success('✓ Document indexed successfully', { id: 'upload' });
+          const systemMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `✅ Document "${file.name}" has been successfully uploaded and indexed. You can now ask questions about its contents.`,
+            timestamp: new Date(),
+          };
+          setMessages((prev: Message[]) => [...prev, systemMessage]);
+          emitNotification({
+            title: 'Document Indexed',
+            message: `${file.name} uploaded from chat.`,
+            level: 'success',
+            category: 'documents',
+          });
         }
-        
-        // Add system message
-        const systemMessage: Message = {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: result.status === 'processing'
-            ? `Document "${file.name}" has been uploaded and is currently being indexed. You can keep using the app while it finishes in the background.`
-            : `Document "${file.name}" has been successfully uploaded and indexed. You can now ask questions about its contents.`,
-          timestamp: new Date(),
-        };
-        setMessages((prev: Message[]) => [...prev, systemMessage]);
-        emitNotification({
-          title: 'Document Indexed',
-          message: `${file.name} uploaded from chat.`,
-          level: 'success',
-          category: 'documents',
-        });
       } else if (isDataFile) {
         toast.loading('Uploading data file...', { id: 'upload' });
         await api.uploadDataFile(file);

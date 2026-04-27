@@ -5,10 +5,11 @@ Internal Operations Intelligence Assistant Backend
 
 import os
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 from datetime import datetime
 import logging
 import gc
+import threading
 from dotenv import load_dotenv
 import math
 
@@ -115,6 +116,14 @@ except Exception as e:
             pass
     report_engine = FallbackReportEngine()
 
+# ---------------------------------------------------------------------------
+# Indexing status tracker — lets the frontend poll for completion.
+# Keys are filenames, values are dicts: {status, started_at, finished_at, error}
+# Thread-safe via a simple lock since BackgroundTasks run in a thread pool.
+# ---------------------------------------------------------------------------
+_indexing_lock = threading.Lock()
+_indexing_status: Dict[str, dict] = {}
+
 # Pydantic models
 class QueryRequest(BaseModel):
     question: str
@@ -166,6 +175,13 @@ def _process_document_background(file_path: str, filename: str, started_at: date
     try:
         if not rag_engine:
             logger.error(f"Document engine unavailable for background indexing: {filename}")
+            with _indexing_lock:
+                _indexing_status[filename] = {
+                    "status": "failed",
+                    "error": "Document engine unavailable",
+                    "started_at": started_at.isoformat(),
+                    "finished_at": datetime.now().isoformat(),
+                }
             return
 
         result = rag_engine.ingest_document(file_path, filename)
@@ -174,8 +190,22 @@ def _process_document_background(file_path: str, filename: str, started_at: date
             f"Background indexing complete for {filename} in {elapsed:.1f}s: "
             f"{result.get('chunks', 0)} chunks"
         )
+        with _indexing_lock:
+            _indexing_status[filename] = {
+                "status": "indexed",
+                "chunks": result.get("chunks", 0),
+                "started_at": started_at.isoformat(),
+                "finished_at": datetime.now().isoformat(),
+            }
     except Exception as error:
         logger.error(f"Background indexing failed for {filename}: {error}", exc_info=True)
+        with _indexing_lock:
+            _indexing_status[filename] = {
+                "status": "failed",
+                "error": str(error),
+                "started_at": started_at.isoformat(),
+                "finished_at": datetime.now().isoformat(),
+            }
         try:
             Path(file_path).unlink(missing_ok=True)
         except Exception:
@@ -261,11 +291,20 @@ async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = 
         
         logger.info(f"Saved document: {file.filename}")
 
+        # Register as "processing" before starting background task
+        now = datetime.now()
+        with _indexing_lock:
+            _indexing_status[file.filename] = {
+                "status": "processing",
+                "started_at": now.isoformat(),
+                "finished_at": None,
+            }
+
         background_tasks.add_task(
             _process_document_background,
             str(file_path),
             file.filename,
-            datetime.now()
+            now
         )
 
         return UploadResponse(
@@ -282,6 +321,23 @@ async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = 
     except Exception as e:
         logger.error(f"Error uploading document: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/indexing-status/{filename}")
+async def get_indexing_status(filename: str):
+    """
+    Check the indexing status of a recently uploaded document.
+
+    Returns:
+        status: "processing" | "indexed" | "failed" | "unknown"
+    """
+    with _indexing_lock:
+        entry = _indexing_status.get(filename)
+
+    if entry is None:
+        return {"filename": filename, "status": "unknown"}
+
+    return {"filename": filename, **entry}
 
 
 @app.get("/documents")

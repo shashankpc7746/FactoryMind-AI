@@ -236,6 +236,73 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
 }
 
 /**
+ * Indexing status for a document being processed in the background
+ */
+export interface IndexingStatus {
+  filename: string;
+  status: 'processing' | 'indexed' | 'failed' | 'unknown';
+  chunks?: number;
+  error?: string;
+  started_at?: string;
+  finished_at?: string;
+}
+
+/**
+ * Check the indexing status of a recently uploaded document
+ */
+export async function checkIndexingStatus(filename: string): Promise<IndexingStatus> {
+  const response = await apiRequest(
+    `/indexing-status/${encodeURIComponent(filename)}`,
+    { method: 'GET' },
+    'Failed to check indexing status'
+  );
+  return safeParseJson<IndexingStatus>(response);
+}
+
+/**
+ * Poll until a document is indexed (or fails). Resolves with the final status.
+ * Polls every 3 seconds with a 5-minute timeout.
+ */
+export function pollUntilIndexed(
+  filename: string,
+  onStatusChange?: (status: IndexingStatus) => void,
+  intervalMs: number = 3000,
+  timeoutMs: number = 300000
+): Promise<IndexingStatus> {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now();
+
+    const poll = async () => {
+      try {
+        const status = await checkIndexingStatus(filename);
+        onStatusChange?.(status);
+
+        if (status.status === 'indexed' || status.status === 'failed') {
+          resolve(status);
+          return;
+        }
+
+        if (Date.now() - startTime > timeoutMs) {
+          resolve({ filename, status: 'failed', error: 'Indexing timed out' });
+          return;
+        }
+
+        setTimeout(poll, intervalMs);
+      } catch {
+        // Network hiccup — keep trying until timeout
+        if (Date.now() - startTime > timeoutMs) {
+          reject(new Error('Indexing status check timed out'));
+          return;
+        }
+        setTimeout(poll, intervalMs);
+      }
+    };
+
+    poll();
+  });
+}
+
+/**
  * Upload data file (CSV/Excel) for report generation
  */
 export async function uploadDataFile(file: File): Promise<UploadResponse> {

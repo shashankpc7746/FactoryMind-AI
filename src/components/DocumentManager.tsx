@@ -115,8 +115,9 @@ export function DocumentManager() {
       setUploadProgress(100);
 
       // Add to document list
+      const newDocId = Date.now().toString();
       const newDoc: Document = {
-        id: Date.now().toString(),
+        id: newDocId,
         fileName: file.name,
         type: 'PDF',
         uploadDate: new Date(),
@@ -125,6 +126,7 @@ export function DocumentManager() {
       };
       
       setDocuments((prev) => [newDoc, ...prev]);
+
       if (result.status === 'processing') {
         toast.success(`Document upload started. Indexing ${file.name} in the background.`);
         emitNotification({
@@ -132,6 +134,34 @@ export function DocumentManager() {
           message: `${file.name} is being indexed in the background.`,
           level: 'info',
           category: 'documents',
+        });
+
+        // Poll for indexing completion and update the document status.
+        api.pollUntilIndexed(file.name).then((status) => {
+          setDocuments((prev) =>
+            prev.map((doc) =>
+              doc.id === newDocId
+                ? { ...doc, status: status.status === 'indexed' ? 'indexed' : 'processing' }
+                : doc
+            )
+          );
+          if (status.status === 'indexed') {
+            toast.success(`${file.name} indexed successfully (${status.chunks ?? 0} chunks)`);
+            emitNotification({
+              title: 'Document Indexed',
+              message: `${file.name} is ready for Q&A.`,
+              level: 'success',
+              category: 'documents',
+            });
+          } else {
+            toast.error(`Indexing failed for ${file.name}: ${status.error || 'Unknown error'}`);
+            emitNotification({
+              title: 'Indexing Failed',
+              message: status.error || `${file.name} could not be indexed.`,
+              level: 'error',
+              category: 'documents',
+            });
+          }
         });
       } else {
         toast.success(`Document indexed successfully (${result.details?.chunks} chunks, ${result.details?.pages} pages)`);

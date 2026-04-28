@@ -173,7 +173,7 @@ class RAGEngine:
     
     def delete_document(self, filename: str) -> Dict:
         """
-        Delete a document.
+        Delete a document and its chunks from the vector store.
         
         Args:
             filename: Name of file to delete
@@ -187,12 +187,13 @@ class RAGEngine:
             if not file_path.exists():
                 raise FileNotFoundError(f"Document {filename} not found")
             
-            # Delete file
+            # Delete file from disk
             file_path.unlink()
             
-            # Note: Vector DB deletion is complex with FAISS
-            # For production, use a vector DB with native deletion support
-            logger.warning(f"Deleted file {filename}, but vector store entries remain (FAISS limitation)")
+            # Remove chunks from the vector store (rebuilds FAISS index)
+            self.vector_db.delete_by_source(filename)
+            
+            logger.info(f"Deleted document {filename} and its vector store entries")
             
             return {
                 "status": "success",

@@ -89,22 +89,37 @@ class LLMClient:
         Returns:
             Dict with 'answer' and 'citations'
         """
-        # Build context from chunks
-        context = "\n\n".join([
-            f"[Document {i+1}: {source_names[i]}]\n{chunk}" 
-            for i, chunk in enumerate(context_chunks)
-        ])
-        
-        system_message = """You are a helpful AI assistant for FactoryMind AI, an internal operations intelligence system.
-Answer questions based on the provided document context. Be precise and cite sources.
-If the answer is not in the context, say so."""
-        
-        prompt = f"""Context from internal documents:
-{context}
+        # Build context — group by source file for clarity
+        # De-duplicate source names while preserving order
+        seen_sources = []
+        for src in source_names:
+            if src not in seen_sources:
+                seen_sources.append(src)
 
-Question: {question}
-
-Provide a clear, detailed answer based on the context above. Mention which documents you're referencing."""
+        context_parts = []
+        for i, chunk in enumerate(context_chunks):
+            context_parts.append(
+                f"--- From: {source_names[i]} ---\n{chunk}"
+            )
+        context = "\n\n".join(context_parts)
+        
+        system_message = (
+            "You are FactoryMind AI, a friendly and knowledgeable assistant for internal operations.\n"
+            "Rules:\n"
+            "1. Answer the user's question using ONLY the provided context.\n"
+            "2. Write naturally and conversationally — do NOT use labels like 'Document 1' or 'Document 2'.\n"
+            "3. Refer to documents by their actual filename when needed (e.g., 'According to Safety Manual.pdf…').\n"
+            "4. Use markdown formatting for readability: **bold** for key terms, bullet points for lists.\n"
+            "5. If the context doesn't contain enough information, say so clearly.\n"
+            "6. Keep your answer concise and helpful — no filler phrases."
+        )
+        
+        prompt = (
+            f"Context from uploaded documents:\n\n{context}\n\n"
+            f"User question: {question}\n\n"
+            "Answer the question based on the context above. "
+            "Be direct and informative."
+        )
         
         try:
             answer = self.generate_response(
@@ -113,8 +128,8 @@ Provide a clear, detailed answer based on the context above. Mention which docum
                 temperature=0.3
             )
             
-            # Extract unique sources
-            citations = list(set(source_names))
+            # Extract unique sources (preserve order)
+            citations = list(dict.fromkeys(source_names))
             
             return {
                 "answer": answer,

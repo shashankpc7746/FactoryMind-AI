@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, FileText, Upload } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
@@ -21,19 +21,54 @@ interface Message {
   };
 }
 
+const CHAT_STORAGE_KEY = 'factorymind_chat_messages';
+
+const defaultGreeting: Message = {
+  id: '1',
+  role: 'assistant',
+  content: 'Hello! I\'m FactoryMind AI. I can help you query process documents, analyze operational data, and generate reports. How can I assist you today?',
+  timestamp: new Date(),
+};
+
+/** Load persisted messages from sessionStorage (survives refresh, clears on tab close). */
+function loadMessages(): Message[] {
+  try {
+    const raw = sessionStorage.getItem(CHAT_STORAGE_KEY);
+    if (!raw) return [defaultGreeting];
+    const parsed = JSON.parse(raw) as Array<Omit<Message, 'timestamp'> & { timestamp: string }>;
+    if (!Array.isArray(parsed) || parsed.length === 0) return [defaultGreeting];
+    return parsed.map((m) => ({ ...m, timestamp: new Date(m.timestamp) }));
+  } catch {
+    return [defaultGreeting];
+  }
+}
+
+/** Convert **bold** markdown to <strong> elements. */
+function renderInlineMarkdown(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 export function ChatAssistant() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Hello! I\'m FactoryMind AI. I can help you query process documents, analyze operational data, and generate reports. How can I assist you today?',
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(loadMessages);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Persist messages to sessionStorage whenever they change
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // Storage full or unavailable — silently ignore
+    }
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -242,7 +277,22 @@ export function ChatAssistant() {
                       : 'bg-card'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap break-words text-sm sm:text-base">{message.content}</p>
+                  <div className="whitespace-pre-wrap break-words text-sm sm:text-base prose-chat">
+                    {message.content.split('\n').map((line, lineIdx) => {
+                      // Render bullet points
+                      const bulletMatch = line.match(/^(\s*[-*•])\s+(.*)/);
+                      const renderedLine = bulletMatch
+                        ? <span key={lineIdx}>{'  • '}{renderInlineMarkdown(bulletMatch[2])}</span>
+                        : renderInlineMarkdown(line);
+
+                      return (
+                        <span key={lineIdx}>
+                          {lineIdx > 0 && <br />}
+                          {renderedLine}
+                        </span>
+                      );
+                    })}
+                  </div>
 
                   {message.citations && message.citations.length > 0 && (
                     <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border/20">

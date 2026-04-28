@@ -362,28 +362,57 @@ class VectorDBHandler:
     
     def delete_by_source(self, source_name: str):
         """
-        Delete documents from a specific source.
-        Note: FAISS doesn't support deletion natively, so this requires rebuilding.
+        Delete documents from a specific source by rebuilding the FAISS index.
+        
+        FAISS doesn't support native deletion, so we:
+        1. Extract all stored documents from the docstore
+        2. Filter out those whose 'source' metadata matches source_name
+        3. Rebuild the vector store from the remaining documents
         
         Args:
             source_name: Name of source file to remove
         """
+        _ensure_faiss_loaded()
+        self._ensure_embeddings_loaded()
+
         if self.vector_store is None:
             return
-        
+
         try:
-            # Get all documents
-            # Note: This is a workaround since FAISS doesn't support direct deletion
-            # In production, consider using a vector DB with native deletion support
-            logger.warning("Document deletion requires vector store rebuild (FAISS limitation)")
-            # For now, we'll keep the implementation simple
-            # A full implementation would require:
-            # 1. Extract all docs from vector store
-            # 2. Filter out docs with matching source
-            # 3. Rebuild vector store
+            # Extract all documents from the docstore
+            docstore = self.vector_store.docstore
+            all_ids = list(self.vector_store.index_to_docstore_id.values())
+            
+            remaining_docs = []
+            removed_count = 0
+            
+            for doc_id in all_ids:
+                doc = docstore.search(doc_id)
+                if doc and hasattr(doc, 'metadata'):
+                    doc_source = doc.metadata.get('source', '')
+                    # Match by exact filename or by path ending
+                    if doc_source == source_name or Path(doc_source).name == source_name:
+                        removed_count += 1
+                        continue
+                remaining_docs.append(doc)
+            
+            logger.info(f"Removing {removed_count} chunks for '{source_name}', keeping {len(remaining_docs)}")
+            
+            if not remaining_docs:
+                # All documents removed — clear the store entirely
+                self.clear_database()
+                logger.info("All chunks removed, vector store cleared")
+                return
+            
+            # Rebuild vector store from remaining documents
+            self.vector_store = FAISS.from_documents(remaining_docs, self.embeddings)
+            self._save_vector_store()
+            
+            logger.info(f"Vector store rebuilt: {self.vector_store.index.ntotal} chunks remaining")
+            gc.collect()
             
         except Exception as e:
-            logger.error(f"Error deleting documents: {str(e)}")
+            logger.error(f"Error deleting documents for '{source_name}': {str(e)}")
             raise
     
     def get_document_count(self) -> int:

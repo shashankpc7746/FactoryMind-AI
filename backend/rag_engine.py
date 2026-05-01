@@ -97,13 +97,14 @@ class RAGEngine:
             logger.error(f"Error ingesting document {filename}: {str(e)}")
             raise
     
-    def query_documents(self, question: str, k: int = 4) -> Dict:
+    def query_documents(self, question: str, k: int = 4, history: list = None) -> Dict:
         """
         Query indexed documents and generate answer.
         
         Args:
             question: User's question
             k: Number of relevant chunks to retrieve
+            history: Optional list of prior conversation turns [{"role": ..., "content": ...}]
             
         Returns:
             Dict with answer, citations, and retrieved context
@@ -120,8 +121,15 @@ class RAGEngine:
                     "chunks_retrieved": 0
                 }
             
-            # Retrieve relevant chunks
-            chunks, sources = self.vector_db.get_relevant_documents(question, k=k)
+            # Contextualize vague follow-up questions using conversation history
+            search_query = question
+            if history and len(history) >= 2:
+                search_query = self._contextualize_query(question, history)
+                if search_query != question:
+                    logger.info(f"Contextualized query: '{question}' -> '{search_query}'")
+            
+            # Retrieve relevant chunks using the contextualized query
+            chunks, sources = self.vector_db.get_relevant_documents(search_query, k=k)
             
             if not chunks:
                 return {
@@ -130,11 +138,12 @@ class RAGEngine:
                     "chunks_retrieved": 0
                 }
             
-            # Generate answer using LLM
+            # Generate answer using LLM (pass original question + history for natural response)
             result = self.llm_client.generate_rag_response(
                 question=question,
                 context_chunks=chunks,
-                source_names=sources
+                source_names=sources,
+                history=history
             )
             
             result['chunks_retrieved'] = len(chunks)
@@ -145,6 +154,49 @@ class RAGEngine:
         except Exception as e:
             logger.error(f"Error querying documents: {str(e)}")
             raise
+    
+    def _contextualize_query(self, question: str, history: list) -> str:
+        """
+        Rewrite a vague follow-up question into a standalone search query
+        using recent conversation history.
+        
+        Examples:
+            "but which model?" + context about speech → "Which speech model is used by SwarAI?"
+            "tell me more" + context about CrewAI → "Tell me more about how CrewAI is used in SwarAI"
+        """
+        try:
+            # Take last 4 turns max to keep the prompt small
+            recent = history[-4:]
+            history_text = "\n".join(
+                f"{'User' if t['role'] == 'user' else 'Assistant'}: {t['content'][:200]}"
+                for t in recent
+            )
+            
+            rewrite_prompt = (
+                "Given the conversation history below, rewrite the latest user question "
+                "into a fully self-contained search query. Do NOT answer the question — "
+                "just rewrite it so it makes sense without the conversation history.\n\n"
+                f"Conversation:\n{history_text}\n\n"
+                f"Latest question: {question}\n\n"
+                "Rewritten standalone query:"
+            )
+            
+            rewritten = self.llm_client.generate_response(
+                prompt=rewrite_prompt,
+                system_message="You are a query rewriter. Output only the rewritten query, nothing else.",
+                temperature=0.0,
+                max_tokens=100
+            ).strip().strip('"').strip("'")
+            
+            # Sanity check — if the LLM returned garbage, use original
+            if len(rewritten) < 3 or len(rewritten) > 300:
+                return question
+            
+            return rewritten
+            
+        except Exception as e:
+            logger.warning(f"Query contextualization failed, using original: {e}")
+            return question
     
     def list_documents(self) -> List[Dict]:
         """

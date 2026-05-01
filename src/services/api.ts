@@ -163,6 +163,7 @@ async function safeParseJson<T>(response: Response): Promise<T> {
 
 export interface QueryRequest {
   question: string;
+  history?: Array<{ role: string; content: string }>;
 }
 
 export interface QueryResponse {
@@ -326,15 +327,23 @@ export async function uploadDataFile(file: File): Promise<UploadResponse> {
 }
 
 /**
- * Query documents using RAG
+ * Query documents using RAG (with optional conversation history for follow-ups)
  */
-export async function queryDocuments(question: string): Promise<QueryResponse> {
+export async function queryDocuments(
+  question: string,
+  history?: Array<{ role: string; content: string }>
+): Promise<QueryResponse> {
+  const body: QueryRequest = { question };
+  if (history && history.length > 0) {
+    body.history = history;
+  }
+
   const response = await apiRequest('/chat/query', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify(body),
   }, 'Failed to query documents');
 
   return safeParseJson<QueryResponse>(response);

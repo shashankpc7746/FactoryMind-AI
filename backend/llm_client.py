@@ -76,7 +76,8 @@ class LLMClient:
         self, 
         question: str, 
         context_chunks: List[str],
-        source_names: List[str]
+        source_names: List[str],
+        history: list = None
     ) -> Dict[str, any]:
         """
         Generate RAG-based answer with citations.
@@ -85,6 +86,7 @@ class LLMClient:
             question: User's question
             context_chunks: Retrieved text chunks
             source_names: Names of source documents
+            history: Optional list of prior conversation turns [{"role": ..., "content": ...}]
             
         Returns:
             Dict with 'answer' and 'citations'
@@ -111,10 +113,30 @@ class LLMClient:
             "3. Refer to documents by their actual filename when needed (e.g., 'According to Safety Manual.pdf…').\n"
             "4. Use markdown formatting for readability: **bold** for key terms, bullet points for lists.\n"
             "5. If the context doesn't contain enough information, say so clearly.\n"
-            "6. Keep your answer concise and helpful — no filler phrases."
+            "6. Keep your answer concise and helpful — no filler phrases.\n"
+            "7. Use the conversation history to understand follow-up questions and pronouns like 'it', 'that', 'which one'."
         )
         
+        # Build conversation history section if available
+        history_section = ""
+        if history and len(history) >= 2:
+            # Include last 6 turns max, truncate long messages
+            recent = history[-6:]
+            turns = []
+            for turn in recent:
+                role_label = "User" if turn["role"] == "user" else "Assistant"
+                content = turn["content"][:150]
+                if len(turn["content"]) > 150:
+                    content += "..."
+                turns.append(f"{role_label}: {content}")
+            history_section = (
+                "Recent conversation:\n"
+                + "\n".join(turns)
+                + "\n\n"
+            )
+        
         prompt = (
+            f"{history_section}"
             f"Context from uploaded documents:\n\n{context}\n\n"
             f"User question: {question}\n\n"
             "Answer the question based on the context above. "

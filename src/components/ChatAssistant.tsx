@@ -94,8 +94,15 @@ export function ChatAssistant() {
     setIsTyping(true);
 
     try {
-      // Query backend API
-      const response = await api.queryDocuments(currentInput);
+      // Build conversation history from recent messages (last 8 user/assistant turns)
+      // We use the latest messages state which now includes the user message we just added
+      const recentMessages = [...messages, userMessage]
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .slice(-8)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      // Query backend API with conversation history
+      const response = await api.queryDocuments(currentInput, recentMessages);
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),

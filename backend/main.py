@@ -125,8 +125,13 @@ _indexing_lock = threading.Lock()
 _indexing_status: Dict[str, dict] = {}
 
 # Pydantic models
+class ChatMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+
 class QueryRequest(BaseModel):
     question: str
+    history: Optional[List[ChatMessage]] = None
 
 class QueryResponse(BaseModel):
     answer: str
@@ -442,7 +447,12 @@ async def query_documents(request: QueryRequest):
         
         logger.info(f"Processing query: {request.question}")
         
-        result = rag_engine.query_documents(request.question)
+        # Convert history to list of dicts for the RAG engine
+        history = None
+        if request.history:
+            history = [{"role": msg.role, "content": msg.content} for msg in request.history]
+        
+        result = rag_engine.query_documents(request.question, history=history)
         
         return QueryResponse(
             answer=result['answer'],

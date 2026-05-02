@@ -77,7 +77,8 @@ class LLMClient:
         question: str, 
         context_chunks: List[str],
         source_names: List[str],
-        history: list = None
+        history: list = None,
+        all_documents: list = None
     ) -> Dict[str, any]:
         """
         Generate RAG-based answer with citations.
@@ -87,6 +88,7 @@ class LLMClient:
             context_chunks: Retrieved text chunks
             source_names: Names of source documents
             history: Optional list of prior conversation turns [{"role": ..., "content": ...}]
+            all_documents: Optional list of ALL uploaded document filenames
             
         Returns:
             Dict with 'answer' and 'citations'
@@ -114,8 +116,16 @@ class LLMClient:
             "4. Use markdown formatting for readability: **bold** for key terms, bullet points for lists.\n"
             "5. If the context doesn't contain enough information, say so clearly.\n"
             "6. Keep your answer concise and helpful — no filler phrases.\n"
-            "7. Use the conversation history to understand follow-up questions and pronouns like 'it', 'that', 'which one'."
+            "7. Use the conversation history to understand follow-up questions and pronouns like 'it', 'that', 'which one'.\n"
+            "8. When the user asks about multiple documents or topics, address ALL of them — don't say information is missing if it's in the context.\n"
+            "9. You are aware of ALL uploaded documents (listed below). Use this knowledge when users ask about 'these documents' or 'all documents'."
         )
+        
+        # Build document inventory section
+        inventory_section = ""
+        if all_documents:
+            doc_list = ", ".join(all_documents)
+            inventory_section = f"All uploaded documents: {doc_list}\n\n"
         
         # Build conversation history section if available
         history_section = ""
@@ -136,6 +146,7 @@ class LLMClient:
             )
         
         prompt = (
+            f"{inventory_section}"
             f"{history_section}"
             f"Context from uploaded documents:\n\n{context}\n\n"
             f"User question: {question}\n\n"

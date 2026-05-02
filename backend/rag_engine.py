@@ -97,13 +97,59 @@ class RAGEngine:
             logger.error(f"Error ingesting document {filename}: {str(e)}")
             raise
     
-    def query_documents(self, question: str, k: int = 4, history: list = None) -> Dict:
+    # Casual greetings that shouldn't hit the RAG pipeline
+    _GREETING_PATTERNS = {
+        'hi', 'hello', 'hey', 'hii', 'hiii', 'yo', 'sup',
+        'good morning', 'good afternoon', 'good evening',
+        'thanks', 'thank you', 'ok', 'okay', 'bye', 'goodbye',
+    }
+
+    # Keywords that signal a meta-question about the system/documents themselves
+    _META_KEYWORDS = [
+        'how many document', 'how many files', 'how many pdf',
+        'list of document', 'list all document', 'which document',
+        'what document', 'what files', 'documents did i',
+        'files did i', 'documents have i', 'documents i uploaded',
+        'shared with you', 'uploaded so far',
+    ]
+
+    def _is_greeting(self, text: str) -> bool:
+        """Check if the text is a casual greeting or social message."""
+        cleaned = text.strip().lower().rstrip('!?.,:;')
+        return cleaned in self._GREETING_PATTERNS
+
+    def _is_meta_question(self, text: str) -> bool:
+        """Check if the question is about the system state (document count, etc.)."""
+        lower = text.lower()
+        return any(kw in lower for kw in self._META_KEYWORDS)
+
+    def _handle_meta_question(self, question: str) -> Dict:
+        """Answer questions about document inventory from system state."""
+        docs = self.list_documents()
+        doc_names = [d['filename'] for d in docs]
+        count = len(doc_names)
+
+        if count == 0:
+            answer = "No documents have been uploaded yet. Please upload some documents first."
+        elif count == 1:
+            answer = f"You have uploaded **1 document**: {doc_names[0]}"
+        else:
+            doc_list = "\n".join(f"- {name}" for name in doc_names)
+            answer = f"You have uploaded **{count} documents**:\n{doc_list}"
+
+        return {
+            "answer": answer,
+            "citations": doc_names,
+            "chunks_retrieved": 0
+        }
+
+    def query_documents(self, question: str, k: int = 6, history: list = None) -> Dict:
         """
         Query indexed documents and generate answer.
         
         Args:
             question: User's question
-            k: Number of relevant chunks to retrieve
+            k: Number of relevant chunks to retrieve (default 6 for multi-doc coverage)
             history: Optional list of prior conversation turns [{"role": ..., "content": ...}]
             
         Returns:
@@ -111,7 +157,26 @@ class RAGEngine:
         """
         try:
             logger.info(f"Querying documents: {question}")
-            
+
+            # --- Smart routing: greetings ---
+            if self._is_greeting(question):
+                doc_count = len(self.list_documents())
+                if doc_count > 0:
+                    return {
+                        "answer": f"Hey there! 👋 I have **{doc_count} document{'s' if doc_count != 1 else ''}** loaded. Feel free to ask me anything about them!",
+                        "citations": [],
+                        "chunks_retrieved": 0
+                    }
+                return {
+                    "answer": "Hey there! 👋 I'm ready to help. Upload a PDF document and I can answer questions about it.",
+                    "citations": [],
+                    "chunks_retrieved": 0
+                }
+
+            # --- Smart routing: meta-questions about documents ---
+            if self._is_meta_question(question):
+                return self._handle_meta_question(question)
+
             # Check if vector store has documents
             doc_count = self.vector_db.get_document_count()
             if doc_count == 0:
@@ -138,12 +203,16 @@ class RAGEngine:
                     "chunks_retrieved": 0
                 }
             
+            # Build document inventory so the LLM knows about ALL uploaded docs
+            all_docs = [d['filename'] for d in self.list_documents()]
+
             # Generate answer using LLM (pass original question + history for natural response)
             result = self.llm_client.generate_rag_response(
                 question=question,
                 context_chunks=chunks,
                 source_names=sources,
-                history=history
+                history=history,
+                all_documents=all_docs
             )
             
             result['chunks_retrieved'] = len(chunks)

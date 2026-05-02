@@ -134,6 +134,8 @@ export function Settings({
       try {
         setIsResetting(true);
         await clearAllData();
+        // Also clear persisted chat history so stale messages don't linger
+        try { sessionStorage.removeItem('factorymind_chat_messages'); } catch { /* ignore */ }
         toast.success('All data has been reset successfully');
         emitNotification({
           title: 'All Data Reset',

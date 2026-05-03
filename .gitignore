@@ -66,3 +66,8 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+# Local convenience scripts & sample data
+*.ps1
+sample_*.csv
+.env.local.example

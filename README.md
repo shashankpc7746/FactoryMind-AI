@@ -1,8 +1,8 @@
-# 🏭 FactoryMind AI - Intelligent Operations Assistant
+# 🏭 FactoryMind AI v1.0 - Intelligent Operations Assistant
 
 > **Transform your internal operations with AI-powered document intelligence and automated data analytics.**
 
-FactoryMind AI is a comprehensive full-stack application that helps organizations manage their internal documentation and generate insightful reports from operational data. Built with cutting-edge AI technology, it combines RAG (Retrieval-Augmented Generation) for intelligent document Q&A and automated report generation from CSV/Excel data.
+FactoryMind AI is a comprehensive full-stack application that helps organizations manage their internal documentation and generate insightful reports from operational data. Built with cutting-edge AI technology, it combines RAG (Retrieval-Augmented Generation) for intelligent document Q&A with conversation memory, and automated report generation from CSV/Excel data.
 
 ![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi) ![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white) ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
@@ -14,9 +14,12 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 
 - **Smart Document Processing** - Upload SOPs, manuals, policies, and other PDFs
 - **Intelligent Search** - Ask questions in natural language and get precise answers
+- **Conversation Memory** - Follow-up questions understood in context ("but which model?")
+- **Smart Query Routing** - Greetings, meta-questions, and document queries handled intelligently
 - **Source Citations** - Every answer includes references to source documents
 - **Vector Database** - Fast and efficient document retrieval using FAISS
-- **Context-Aware** - Understands context and provides relevant information
+- **Proper Document Deletion** - Deleting a doc removes it from both disk and vector index
+- **Multi-Document Awareness** - Cross-document questions answered correctly
 
 ### 📊 Automated Report Generator
 
@@ -33,7 +36,9 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 - **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
 - **Dark/Light Themes** - Choose your preferred viewing mode
 - **Intuitive Navigation** - Clean sidebar with easy access to all features
-- **Real-time Updates** - Instant feedback on all operations
+- **Real-time Indexing Status** - Live progress tracking from upload → indexed → ready
+- **Chat Session Persistence** - Chat history survives page refreshes
+- **Markdown Rendering** - LLM responses display with proper bold, bullets, and formatting
 - **File Management** - Drag-and-drop interface for document uploads
 
 ---
@@ -119,8 +124,8 @@ You should see `(fact-ai)` appear in your terminal prompt, indicating the virtua
 #### Install Backend Dependencies
 
 ```bash
-# Install all required Python packages
-pip install -r requirements.txt
+# Navigate to the project root and install
+pip install -r backend/requirements.txt
 ```
 
 This will install FastAPI, LangChain, FAISS, ONNX Runtime, and all other dependencies. It may take 2-3 minutes.
@@ -190,15 +195,7 @@ This will install React, TypeScript, Vite, Tailwind CSS, and all UI components. 
 
 #### Configure Frontend Environment (Optional)
 
-```bash
-# Copy the example environment file
-copy .env.local.example .env.local
-
-# On macOS/Linux:
-cp .env.local.example .env.local
-```
-
-By default, the frontend connects to `http://localhost:8000`. If your backend runs on a different URL, update `.env.local`:
+By default, the frontend connects to `http://localhost:8000`. If your backend runs on a different URL, create a `.env.local` file:
 
 ```env
 VITE_API_URL=http://localhost:8000
@@ -360,32 +357,37 @@ Returns system status, document count, and report statistics.
 #### Document Management
 
 ```http
-POST /upload/document        # Upload and index a PDF
-GET  /documents              # List all documents
-DELETE /documents/{filename} # Delete a specific document
+POST /upload/document              # Upload and index a PDF (background processing)
+GET  /indexing-status/{filename}   # Poll indexing progress
+GET  /documents                    # List all documents
+DELETE /documents/{filename}       # Delete document + its vector chunks
 ```
 
-#### RAG Query
+#### RAG Query (with Conversation Memory)
 
 ```http
 POST /chat/query
 Content-Type: application/json
 
 {
-  "question": "What are the quality control procedures?"
+  "question": "What are the quality control procedures?",
+  "history": [
+    { "role": "user", "content": "What is this document about?" },
+    { "role": "assistant", "content": "This document covers..." }
+  ]
 }
 ```
 
-Returns AI-generated answer with source citations.
+Returns AI-generated answer with source citations. The optional `history` field enables follow-up question understanding.
 
 #### Report Generation
 
 ```http
-POST /report/generate        # Upload CSV and generate report
-GET  /reports                # List all reports
-GET  /reports/{report_id}    # Get specific report details
-GET  /reports/{report_id}/download  # Download report PDF
-DELETE /reports/{report_id}  # Delete a report
+POST /report/generate              # Upload CSV and generate report
+GET  /reports                      # List all reports
+GET  /reports/{report_id}          # Get specific report details
+GET  /reports/{report_id}/download # Download report PDF
+DELETE /reports/{report_id}        # Delete a report
 ```
 
 ---
@@ -468,33 +470,28 @@ The backend uses **ONNX Runtime** instead of PyTorch for text embeddings, keepin
 FactoryMind-AI/
 ├── backend/                    # Python FastAPI backend
 │   ├── main.py                # Main application & API routes
-│   ├── rag_engine.py          # RAG pipeline for documents
+│   ├── rag_engine.py          # RAG pipeline (query routing, memory, contextualization)
 │   ├── report_engine.py       # Report generation logic
-│   ├── llm_client.py          # LLM API client
-│   └── db.py                  # FAISS vector database
+│   ├── llm_client.py          # LLM API client (Groq/LLaMA)
+│   ├── db.py                  # FAISS vector database (with deletion support)
+│   └── requirements.txt       # Python dependencies
 │
 ├── src/                       # React TypeScript frontend
 │   ├── components/            # UI components
-│   │   ├── ChatAssistant.tsx  # Chat interface
-│   │   ├── DocumentManager.tsx# Document management
+│   │   ├── ChatAssistant.tsx  # Chat interface (session persistence, markdown)
+│   │   ├── DocumentManager.tsx# Document management (indexing status polling)
 │   │   ├── ReportGenerator.tsx# Report generation
 │   │   ├── History.tsx        # History view
 │   │   ├── Settings.tsx       # Settings panel
-│   │   └── ui/                # Reusable UI components
+│   │   └── ui/                # Reusable UI components (shadcn/ui)
 │   ├── services/
-│   │   └── api.ts             # API client functions
+│   │   ├── api.ts             # API client (with conversation history support)
+│   │   └── events.ts          # Event emitter for notifications
 │   ├── styles/
 │   │   └── globals.css        # Global styles
 │   └── main.tsx               # App entry point
 │
-├── data/                      # Storage directories
-│   ├── docs/                  # Uploaded PDF documents
-│   └── csv/                   # Uploaded CSV files
-│
-├── vector_store/              # FAISS vector database
-│
 ├── .env.example               # Environment variables template
-├── requirements.txt           # Python dependencies
 ├── package.json               # Node.js dependencies
 ├── render.yaml                # Render deployment config
 └── README.md                  # This file
@@ -506,7 +503,7 @@ FactoryMind-AI/
 # Build frontend
 npm run build
 
-# Output will be in 'dist/' directory
+# Output will be in 'build/' directory
 # Serve with any static file server
 ```
 
@@ -688,10 +685,19 @@ Sample images from [Unsplash](https://unsplash.com) used under their [free licen
 
 ## 🚀 What's Next?
 
-Exciting features coming soon:
+### ✅ Shipped in v1.0
+
+- ✅ ~~Advanced analytics dashboard~~ — Interactive charts in reports
+- ✅ ~~Conversation memory~~ — Follow-up questions work naturally
+- ✅ ~~Smart query routing~~ — Greetings, meta-questions handled intelligently
+- ✅ ~~Real-time indexing status~~ — Track document processing live
+- ✅ ~~Session persistence~~ — Chat survives page refreshes
+- ✅ ~~Proper document deletion~~ — FAISS index rebuilt on delete
+- ✅ ~~ONNX Runtime optimization~~ — Runs on 512MB RAM free tier
+
+### 🔮 Coming Soon
 
 - 🔐 User authentication and role-based access
-- ✅ ~~Advanced analytics dashboard~~ — **Shipped!** Interactive charts in reports
 - 🌍 Multi-language support
 - 🔗 Integration with popular tools (Slack, Teams, etc.)
 - 📧 Email notifications and scheduled reports

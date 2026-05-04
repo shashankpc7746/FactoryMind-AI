@@ -88,6 +88,7 @@ Before you begin, make sure you have the following installed:
 - ✅ **Git** - [Download Git](https://git-scm.com/downloads)
 - ✅ **Groq API Key** - [Get free API key](https://console.groq.com/)
 - ✅ **HuggingFace API Key** - [Get free API key](https://huggingface.co/settings/tokens)
+- ✅ **Firebase Project** - [Create free project](https://console.firebase.google.com/) (for Google Sign-In)
 
 ### 📥 Step 1: Clone the Repository
 
@@ -158,14 +159,30 @@ MAX_FILE_SIZE=10485760  # 10MB default
 
 💡 **Pro Tip:** Never commit your `.env` file to version control. It's already in `.gitignore`.
 
+#### Set Up Firebase Authentication
+
+1. Go to [Firebase Console](https://console.firebase.google.com/) and create a new project
+2. Go to **Authentication → Sign-in method → Google** and enable it
+3. Go to **Project Settings → General → Your apps** and click **Add app** (Web)
+4. Copy the Firebase config values into your `.env` file:
+
+```env
+VITE_FIREBASE_API_KEY=AIzaSy...
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
+```
+
 #### Start the Backend Server
 
 ```bash
 # Navigate to the backend directory
 cd backend
 
-# Start the FastAPI server
-python main.py
+# Start the FastAPI server with hot-reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 You should see output like:

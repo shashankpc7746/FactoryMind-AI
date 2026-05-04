@@ -1,8 +1,8 @@
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, LogOut } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import { APP_NOTIFICATION_EVENT, AppNotificationPayload } from '../services/events';
@@ -19,6 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from './ui/popover';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
   title: string;
@@ -145,12 +146,17 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
     toast.info('Opened Chat Assistant for your query');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('userProfile');
-    localStorage.removeItem('userPreferences');
-    localStorage.removeItem('appNotifications');
-    toast.success('Signed out locally');
-    window.location.reload();
+  const { user, signOut: firebaseSignOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem('userProfile');
+      localStorage.removeItem('userPreferences');
+      localStorage.removeItem('appNotifications');
+      await firebaseSignOut();
+    } catch {
+      toast.error('Failed to sign out');
+    }
   };
 
   return (
@@ -244,6 +250,9 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="gap-2 px-1 sm:px-2">
                 <Avatar className="w-7 h-7 sm:w-8 sm:h-8">
+                  {user?.photoURL && (
+                    <AvatarImage src={user.photoURL} alt={userName} />
+                  )}
                   <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
                     {userName.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
@@ -258,8 +267,9 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
                 Profile Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                Log out
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

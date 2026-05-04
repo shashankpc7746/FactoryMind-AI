@@ -6,6 +6,8 @@ import { DocumentManager } from './components/DocumentManager';
 import { ReportGenerator } from './components/ReportGenerator';
 import { History } from './components/History';
 import { Settings } from './components/Settings';
+import { Login } from './components/Login';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/ui/sonner';
 
 type UserProfile = {
@@ -45,9 +47,68 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 };
 
 export default function App() {
+  return (
+    <AuthProvider>
+      <AppShell />
+    </AuthProvider>
+  );
+}
+
+/** Decides whether to show Login or the authenticated app. */
+function AppShell() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div
+        className="flex h-screen items-center justify-center"
+        style={{
+          background:
+            'linear-gradient(135deg, hsl(220 60% 12%) 0%, hsl(240 50% 8%) 50%, hsl(260 60% 12%) 100%)',
+        }}
+      >
+        <div className="text-center">
+          <div
+            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
+            style={{
+              background: 'linear-gradient(135deg, hsl(220 80% 55%), hsl(260 80% 60%))',
+              boxShadow: '0 8px 32px hsla(240, 80%, 50%, 0.3)',
+            }}
+          >
+            <span className="text-2xl">🏭</span>
+          </div>
+          <p style={{ color: 'hsl(220 15% 55%)' }} className="text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  return <AppContent />;
+}
+
+/** Main authenticated application. */
+function AppContent() {
+  const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('chat');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_PROFILE);
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    // Initialize profile from Firebase user data if available
+    if (user) {
+      const nameParts = (user.displayName || 'User').split(' ');
+      return {
+        firstName: nameParts[0] || 'User',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: user.email || '',
+        role: 'Factory Manager',
+        department: 'Production',
+      };
+    }
+    return DEFAULT_PROFILE;
+  });
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
 
   const applyTheme = (newTheme: 'light' | 'dark') => {
@@ -155,7 +216,7 @@ export default function App() {
     }
   };
 
-  const fullName = `${userProfile.firstName} ${userProfile.lastName}`;
+  const fullName = `${userProfile.firstName} ${userProfile.lastName}`.trim();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

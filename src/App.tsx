@@ -56,7 +56,7 @@ export default function App() {
 
 /** Decides whether to show Login or the authenticated app. */
 function AppShell() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAuthEnabled } = useAuth();
 
   if (loading) {
     return (
@@ -83,7 +83,8 @@ function AppShell() {
     );
   }
 
-  if (!user) {
+  // Show login only when Firebase auth is active and user is not signed in
+  if (isAuthEnabled && !user) {
     return <Login />;
   }
 

@@ -146,7 +146,7 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
     toast.info('Opened Chat Assistant for your query');
   };
 
-  const { user, signOut: firebaseSignOut } = useAuth();
+  const { user, signOut: firebaseSignOut, isAuthEnabled } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -266,11 +266,15 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
               <DropdownMenuItem onClick={() => onNavigate?.('settings')}>
                 Profile Settings
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign out
-              </DropdownMenuItem>
+              {isAuthEnabled && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign out
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

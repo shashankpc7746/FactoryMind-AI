@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import logoImage from '../images/FactoryMind-AI.png';
 
 export function Login() {
   const { signInWithGoogle } = useAuth();
@@ -52,13 +53,14 @@ export function Login() {
         {/* Logo & Branding */}
         <div className="text-center mb-8">
           <div
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 p-2"
             style={{
-              background: 'linear-gradient(135deg, hsl(220 80% 55%), hsl(260 80% 60%))',
+              background: 'linear-gradient(135deg, hsl(220 20% 15%), hsl(240 20% 12%))',
               boxShadow: '0 8px 32px hsla(240, 80%, 50%, 0.3)',
+              border: '1px solid hsla(220, 40%, 30%, 0.3)',
             }}
           >
-            <span className="text-3xl">🏭</span>
+            <img src={logoImage} alt="FactoryMind AI" className="w-full h-full object-contain" />
           </div>
           <h1
             className="text-3xl font-bold tracking-tight mb-2"

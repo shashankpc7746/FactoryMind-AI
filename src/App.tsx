@@ -9,6 +9,7 @@ import { Settings } from './components/Settings';
 import { Login } from './components/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/ui/sonner';
+import logoImage from './images/FactoryMind-AI.png';
 
 type UserProfile = {
   firstName: string;
@@ -69,15 +70,18 @@ function AppShell() {
       >
         <div className="text-center">
           <div
-            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
+            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 p-2"
             style={{
-              background: 'linear-gradient(135deg, hsl(220 80% 55%), hsl(260 80% 60%))',
+              background: 'linear-gradient(135deg, hsl(220 20% 15%), hsl(240 20% 12%))',
               boxShadow: '0 8px 32px hsla(240, 80%, 50%, 0.3)',
+              border: '1px solid hsla(220, 40%, 30%, 0.3)',
+              animation: 'pulse 2s ease-in-out infinite',
             }}
           >
-            <span className="text-2xl">🏭</span>
+            <img src={logoImage} alt="FactoryMind AI" className="w-full h-full object-contain" />
           </div>
           <p style={{ color: 'hsl(220 15% 55%)' }} className="text-sm">Loading...</p>
+          <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }`}</style>
         </div>
       </div>
     );

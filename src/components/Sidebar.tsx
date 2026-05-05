@@ -1,8 +1,9 @@
 import { MessageSquare, FileText, BarChart3, History, Settings, Moon, Sun, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useState } from 'react';
 import logoImage from '../images/FactoryMind-AI.png';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
   currentPage: string;
@@ -15,6 +16,7 @@ interface SidebarProps {
 
 export function Sidebar({ currentPage, onNavigate, theme, onToggleTheme, userName, userRole }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user } = useAuth();
 
   const navItems = [
     { id: 'chat', label: 'Chat Assistant', icon: MessageSquare },
@@ -134,6 +136,9 @@ export function Sidebar({ currentPage, onNavigate, theme, onToggleTheme, userNam
           {/* User Profile */}
           <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg bg-sidebar-accent">
             <Avatar className="flex-shrink-0">
+              {user?.photoURL && (
+                <AvatarImage src={user.photoURL} alt={userName} />
+              )}
               <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
                 {initials}
               </AvatarFallback>

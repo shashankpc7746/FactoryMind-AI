@@ -40,6 +40,8 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 - **Chat Session Persistence** - Chat history survives page refreshes
 - **Markdown Rendering** - LLM responses display with proper bold, bullets, and formatting
 - **File Management** - Drag-and-drop interface for document uploads
+- **Google Sign-In** - Firebase Authentication with one-click Google login
+- **Smart Profile Settings** - Auto-saving preferences, Google account integration
 
 ---
 
@@ -74,6 +76,7 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 - **Tailwind CSS** - Utility-first CSS framework
 - **Shadcn/UI** - Beautiful, accessible components
 - **Lucide React** - Consistent icon library
+- **Firebase Auth** - Google Sign-In with persistent sessions
 
 ---
 

@@ -101,7 +101,13 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState('chat');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-    // Initialize profile from Firebase user data if available
+    // Priority: saved profile > Firebase user data > defaults
+    try {
+      const saved = localStorage.getItem('userProfile');
+      if (saved) return JSON.parse(saved) as UserProfile;
+    } catch { /* ignore parse errors */ }
+
+    // Seed from Firebase user data on first sign-in
     if (user) {
       const nameParts = (user.displayName || 'User').split(' ');
       return {
@@ -127,7 +133,6 @@ function AppContent() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const savedProfile = localStorage.getItem('userProfile');
     const savedPreferences = localStorage.getItem('userPreferences');
     
     if (savedTheme) {
@@ -135,14 +140,6 @@ function AppContent() {
       applyTheme(savedTheme);
     } else {
       applyTheme(theme);
-    }
-    
-    if (savedProfile) {
-      try {
-        setUserProfile(JSON.parse(savedProfile));
-      } catch {
-        setUserProfile(DEFAULT_PROFILE);
-      }
     }
 
     if (savedPreferences) {

@@ -1,4 +1,4 @@
-import { MessageSquare, FileText, BarChart3, History, Settings, Moon, Sun, Menu, X } from 'lucide-react';
+import { MessageSquare, FileText, BarChart3, History, Settings, Moon, Sun, Menu, X, LogOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useState } from 'react';
@@ -16,7 +16,7 @@ interface SidebarProps {
 
 export function Sidebar({ currentPage, onNavigate, theme, onToggleTheme, userName, userRole }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { user } = useAuth();
+  const { user, isAuthEnabled, signOut } = useAuth();
 
   const navItems = [
     { id: 'chat', label: 'Chat Assistant', icon: MessageSquare },
@@ -152,6 +152,23 @@ export function Sidebar({ currentPage, onNavigate, theme, onToggleTheme, userNam
               </p>
             </div>
           </div>
+
+          {/* Sign Out Button */}
+          {isAuthEnabled && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                try {
+                  await signOut();
+                } catch { /* handled by context */ }
+              }}
+              className="w-full justify-start gap-3 text-sm text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign out</span>
+            </Button>
+          )}
         </div>
       </aside>
 

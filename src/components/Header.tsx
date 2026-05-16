@@ -169,7 +169,7 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
 
         {/* Search Bar */}
         <div className="hidden md:flex flex-1 max-w-xl">
-          <div className="relative w-full">
+          <div className="relative w-full group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="search"
@@ -182,8 +182,11 @@ export function Header({ title, onNavigate, userName }: HeaderProps) {
                   handleSearchSubmit();
                 }
               }}
-              className="pl-10 bg-input-background w-full"
+              className="pl-10 pr-16 bg-input-background w-full"
             />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono text-muted-foreground bg-muted border border-border group-focus-within:hidden">
+              Ctrl+K
+            </kbd>
           </div>
         </div>
 

@@ -10,6 +10,7 @@ import { Login } from './components/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/ui/sonner';
 import logoImage from './images/FactoryMind-AI.png';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 type UserProfile = {
   firstName: string;
@@ -98,6 +99,7 @@ function AppShell() {
 /** Main authenticated application. */
 function AppContent() {
   const { user } = useAuth();
+  useKeyboardShortcuts();
   const [currentPage, setCurrentPage] = useState('chat');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {

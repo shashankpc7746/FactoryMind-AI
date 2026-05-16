@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, MessageSquare, FileText, Clock } from 'lucide-react';
+import { Search, MessageSquare, FileText, Clock, Trash2, History as HistoryIcon } from 'lucide-react';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -21,49 +21,50 @@ export function History() {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const data = await api.getHistory();
-        
-        const items: HistoryItem[] = [];
-        
-        // Add reports
-        if (data.reports?.items) {
-          data.reports.items.forEach((report: any) => {
-            items.push({
-              id: report.id,
-              type: 'report',
-              title: `Report: ${report.filename || 'Untitled'}`,
-              date: new Date(report.date || Date.now()),
-              preview: typeof report.summary === 'string' ? report.summary.slice(0, 100) : (report.summary?.executive_summary?.slice(0, 100) || 'Generated report summary...')
-            });
+  const fetchHistory = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getHistory();
+      
+      const items: HistoryItem[] = [];
+      
+      // Add reports
+      if (data.reports?.items) {
+        data.reports.items.forEach((report: any) => {
+          items.push({
+            id: report.id,
+            type: 'report',
+            title: `Report: ${report.filename || 'Untitled'}`,
+            date: new Date(report.date || Date.now()),
+            preview: typeof report.summary === 'string' ? report.summary.slice(0, 100) : (report.summary?.executive_summary?.slice(0, 100) || 'Generated report summary...')
           });
-        }
-        
-        // Add documents
-        if (data.documents?.items) {
-          data.documents.items.forEach((doc: any) => {
-            items.push({
-              id: doc.filename,
-              type: 'chat',
-              title: `Document: ${doc.filename}`,
-              date: new Date(doc.upload_date ? doc.upload_date * 1000 : Date.now()),
-              preview: `Uploaded document`
-            });
-          });
-        }
-        
-        // Sort by date descending
-        items.sort((a, b) => b.date.getTime() - a.date.getTime());
-        setHistory(items);
-      } catch (error) {
-        console.error('Failed to fetch history:', error);
-      } finally {
-        setLoading(false);
+        });
       }
-    };
-    
+      
+      // Add documents
+      if (data.documents?.items) {
+        data.documents.items.forEach((doc: any) => {
+          items.push({
+            id: doc.filename,
+            type: 'chat',
+            title: `Document: ${doc.filename}`,
+            date: new Date(doc.upload_date ? doc.upload_date * 1000 : Date.now()),
+            preview: `Uploaded document`
+          });
+        });
+      }
+      
+      // Sort by date descending
+      items.sort((a, b) => b.date.getTime() - a.date.getTime());
+      setHistory(items);
+    } catch (error) {
+      console.error('Failed to fetch history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchHistory();
   }, []);
 
@@ -73,29 +74,57 @@ export function History() {
       item.preview.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const reportCount = filteredHistory.filter((i) => i.type === 'report').length;
+  const docCount = filteredHistory.filter((i) => i.type === 'chat').length;
+
   return (
     <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-      {/* Search */}
+      {/* Search & Actions */}
       <Card className="p-3 sm:p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search history..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search history..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchHistory}
+            disabled={loading}
+            className="flex-shrink-0"
+          >
+            Refresh
+          </Button>
         </div>
       </Card>
 
-      {/* History List */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Recent Activity</h3>
-          <Badge variant="secondary">{filteredHistory.length} items</Badge>
+      {/* Stats Bar */}
+      {!loading && history.length > 0 && (
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold">Recent Activity</h3>
+            <Badge variant="secondary">{filteredHistory.length} items</Badge>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <FileText className="w-3.5 h-3.5" /> {docCount} docs
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <MessageSquare className="w-3.5 h-3.5" /> {reportCount} reports
+            </span>
+          </div>
         </div>
+      )}
 
+      {/* History List */}
+      <div className="space-y-3">
         {filteredHistory.map((item) => (
           <Card
             key={item.id}
@@ -125,7 +154,7 @@ export function History() {
                     {item.title}
                   </h4>
                   <Badge variant={item.type === 'chat' ? 'default' : 'secondary'} className="flex-shrink-0 text-[10px] sm:text-xs">
-                    {item.type === 'chat' ? 'Chat' : 'Report'}
+                    {item.type === 'chat' ? 'Document' : 'Report'}
                   </Badge>
                 </div>
 
@@ -157,20 +186,44 @@ export function History() {
           </Card>
         ))}
 
-        {filteredHistory.length === 0 && !loading && (
-          <Card className="p-12">
+        {/* Empty States */}
+        {filteredHistory.length === 0 && !loading && searchQuery && (
+          <Card className="p-8 sm:p-12">
             <div className="text-center text-muted-foreground">
-              <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No items found</p>
-              <p className="text-sm mt-1">Try adjusting your search query</p>
+              <Search className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-40" />
+              <p className="font-medium">No results for &ldquo;{searchQuery}&rdquo;</p>
+              <p className="text-sm mt-1">Try a different search term</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => setSearchQuery('')}
+              >
+                Clear search
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {filteredHistory.length === 0 && !loading && !searchQuery && (
+          <Card className="p-8 sm:p-12">
+            <div className="text-center text-muted-foreground">
+              <HistoryIcon className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-40" />
+              <p className="font-medium">No activity yet</p>
+              <p className="text-sm mt-1">Upload documents or generate reports to see your history here</p>
             </div>
           </Card>
         )}
         
         {loading && (
-          <Card className="p-12">
+          <Card className="p-8 sm:p-12">
             <div className="text-center text-muted-foreground">
-              <p>Loading history...</p>
+              <div
+                className="w-8 h-8 mx-auto mb-3 rounded-full border-2 border-primary border-t-transparent"
+                style={{ animation: 'spin 1s linear infinite' }}
+              />
+              <p className="text-sm">Loading history...</p>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
           </Card>
         )}

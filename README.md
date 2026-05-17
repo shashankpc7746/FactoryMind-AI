@@ -1,57 +1,66 @@
-# 🏭 FactoryMind AI v1.0 - Intelligent Operations Assistant
+# 🏭 FactoryMind AI v2.0 - Intelligent Operations Assistant
 
-> **Transform your internal operations with AI-powered document intelligence and automated data analytics.**
+> **Transform your internal operations with AI-powered document intelligence, automated data analytics, and secure Google Authentication.**
 
-FactoryMind AI is a comprehensive full-stack application that helps organizations manage their internal documentation and generate insightful reports from operational data. Built with cutting-edge AI technology, it combines RAG (Retrieval-Augmented Generation) for intelligent document Q&A with conversation memory, and automated report generation from CSV/Excel data.
+FactoryMind AI is a comprehensive full-stack application that helps organizations manage their internal documentation and generate insightful reports from operational data. Built with cutting-edge AI technology, it combines RAG (Retrieval-Augmented Generation) for intelligent document Q&A with conversation memory, automated report generation from CSV/Excel data, and Firebase-powered Google Sign-In for secure access control.
 
-![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi) ![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white) ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi) ![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white) ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white) ![Firebase](https://img.shields.io/badge/Auth-Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 
 ---
 
 ## ✨ Key Features
 
+### 🔐 Authentication & Security
+
+- **Google Sign-In** — One-click authentication via Firebase
+- **Auth Guard** — Protected dashboard, only authenticated users can access
+- **Persistent Sessions** — Stay signed in across page refreshes
+- **Graceful Fallback** — App works without auth when Firebase is not configured
+- **Profile Photo Integration** — Google profile photo displayed in sidebar and header
+
 ### 🤖 RAG-Based Knowledge Assistant
 
-- **Smart Document Processing** - Upload SOPs, manuals, policies, and other PDFs
-- **Intelligent Search** - Ask questions in natural language and get precise answers
-- **Conversation Memory** - Follow-up questions understood in context ("but which model?")
-- **Smart Query Routing** - Greetings, meta-questions, and document queries handled intelligently
-- **Source Citations** - Every answer includes references to source documents
-- **Vector Database** - Fast and efficient document retrieval using FAISS
-- **Proper Document Deletion** - Deleting a doc removes it from both disk and vector index
-- **Multi-Document Awareness** - Cross-document questions answered correctly
+- **Smart Document Processing** — Upload SOPs, manuals, policies, and other PDFs
+- **Intelligent Search** — Ask questions in natural language and get precise answers
+- **Conversation Memory** — Follow-up questions understood in context ("but which model?")
+- **Smart Query Routing** — Greetings, meta-questions, and document queries handled intelligently
+- **Source Citations** — Every answer includes references to source documents
+- **Vector Database** — Fast and efficient document retrieval using FAISS
+- **Proper Document Deletion** — Deleting a doc removes it from both disk and vector index
+- **Multi-Document Awareness** — Cross-document questions answered correctly
 
 ### 📊 Automated Report Generator
 
-- **Data Analysis** - Upload CSV/Excel files for instant insights
-- **AI-Powered Insights** - Automatically generates executive summaries
-- **Visual Analytics** - Interactive charts: bar distributions, line trends, pie breakdowns, and correlation heatmaps
-- **Anomaly Detection** - Identifies outliers and patterns using statistical methods
-- **Professional Reports** - Export beautifully formatted PDF reports
-- **Key Metrics Dashboard** - Visual representation of trends and KPIs
-- **Actionable Recommendations** - Get data-driven suggestions for improvement
+- **Data Analysis** — Upload CSV/Excel files for instant insights
+- **AI-Powered Insights** — Automatically generates executive summaries
+- **Visual Analytics** — Interactive charts: bar distributions, line trends, pie breakdowns, and correlation heatmaps
+- **Anomaly Detection** — Identifies outliers and patterns using statistical methods
+- **Professional Reports** — Export beautifully formatted PDF reports
+- **Key Metrics Dashboard** — Visual representation of trends and KPIs
+- **Actionable Recommendations** — Get data-driven suggestions for improvement
 
 ### 🎨 Modern User Interface
 
-- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
-- **Dark/Light Themes** - Choose your preferred viewing mode
-- **Intuitive Navigation** - Clean sidebar with easy access to all features
-- **Real-time Indexing Status** - Live progress tracking from upload → indexed → ready
-- **Chat Session Persistence** - Chat history survives page refreshes
-- **Markdown Rendering** - LLM responses display with proper bold, bullets, and formatting
-- **File Management** - Drag-and-drop interface for document uploads
-- **Google Sign-In** - Firebase Authentication with one-click Google login
-- **Smart Profile Settings** - Auto-saving preferences, Google account integration
+- **Responsive Design** — Works seamlessly on desktop, tablet, and mobile
+- **Dark/Light Themes** — Choose your preferred viewing mode (auto-saved)
+- **Intuitive Navigation** — Clean sidebar with easy access to all features
+- **Real-time Indexing Status** — Live progress tracking from upload → indexed → ready
+- **Chat Session Persistence** — Chat history survives page refreshes
+- **Markdown Rendering** — LLM responses display with proper bold, bullets, and formatting
+- **File Management** — Drag-and-drop interface for document uploads
+- **Keyboard Shortcuts** — `Ctrl+K` to focus search bar
+- **Smart Profile Settings** — Auto-saving preferences, Google account integration
+- **Activity History** — View and search through all document and report activity
 
 ---
 
 ## 🎯 Who Is This For?
 
-- **Operations Managers** - Quick access to SOPs and operational procedures
-- **Quality Assurance Teams** - Instant reference to quality control documents
-- **Data Analysts** - Automated report generation from production data
-- **Safety Officers** - Fast retrieval of safety guidelines and protocols
-- **Management Teams** - Executive summaries and data-driven insights
+- **Operations Managers** — Quick access to SOPs and operational procedures
+- **Quality Assurance Teams** — Instant reference to quality control documents
+- **Data Analysts** — Automated report generation from production data
+- **Safety Officers** — Fast retrieval of safety guidelines and protocols
+- **Management Teams** — Executive summaries and data-driven insights
 
 ---
 
@@ -59,24 +68,25 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 
 ### Backend
 
-- **FastAPI** - High-performance Python web framework
-- **LangChain** - For RAG pipeline and document processing
-- **FAISS** - Facebook's vector database for similarity search
-- **ONNX Runtime** - Lightweight embeddings inference (~50MB RAM vs ~250MB with PyTorch)
-- **HuggingFace** - Model hosting and tokenizers
-- **Groq API** - Lightning-fast LLM inference
-- **Pandas & NumPy** - Data analysis and manipulation
-- **ReportLab** - PDF report generation
+- **FastAPI** — High-performance Python web framework
+- **LangChain** — For RAG pipeline and document processing
+- **FAISS** — Facebook's vector database for similarity search
+- **ONNX Runtime** — Lightweight embeddings inference (~50MB RAM vs ~250MB with PyTorch)
+- **HuggingFace** — Model hosting and tokenizers
+- **Groq API** — Lightning-fast LLM inference (LLaMA 3.1 70B)
+- **Pandas & NumPy** — Data analysis and manipulation
+- **ReportLab** — PDF report generation
 
 ### Frontend
 
-- **React 18** - Modern UI library
-- **TypeScript** - Type-safe JavaScript
-- **Vite** - Lightning-fast build tool
-- **Tailwind CSS** - Utility-first CSS framework
-- **Shadcn/UI** - Beautiful, accessible components
-- **Lucide React** - Consistent icon library
-- **Firebase Auth** - Google Sign-In with persistent sessions
+- **React 18** — Modern UI library
+- **TypeScript** — Type-safe JavaScript
+- **Vite** — Lightning-fast build tool
+- **Tailwind CSS** — Utility-first CSS framework
+- **Shadcn/UI** — Beautiful, accessible components
+- **Lucide React** — Consistent icon library
+- **Firebase Auth** — Google Sign-In with persistent sessions
+- **Recharts** — Interactive data visualizations
 
 ---
 
@@ -86,22 +96,17 @@ FactoryMind AI is a comprehensive full-stack application that helps organization
 
 Before you begin, make sure you have the following installed:
 
-- ✅ **Python 3.10 or higher** - [Download Python](https://www.python.org/downloads/)
-- ✅ **Node.js 18 or higher** - [Download Node.js](https://nodejs.org/)
-- ✅ **Git** - [Download Git](https://git-scm.com/downloads)
-- ✅ **Groq API Key** - [Get free API key](https://console.groq.com/)
-- ✅ **HuggingFace API Key** - [Get free API key](https://huggingface.co/settings/tokens)
-- ✅ **Firebase Project** - [Create free project](https://console.firebase.google.com/) (for Google Sign-In)
+- ✅ **Python 3.10 or higher** — [Download Python](https://www.python.org/downloads/)
+- ✅ **Node.js 18 or higher** — [Download Node.js](https://nodejs.org/)
+- ✅ **Git** — [Download Git](https://git-scm.com/downloads)
+- ✅ **Groq API Key** (free) — [Get API key](https://console.groq.com/)
+- ✅ **HuggingFace API Key** (free) — [Get API key](https://huggingface.co/settings/tokens)
+- ✅ **Firebase Project** (free) — [Create project](https://console.firebase.google.com/) — see [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed guide
 
 ### 📥 Step 1: Clone the Repository
 
-First, let's get the code onto your machine:
-
 ```bash
-# Clone the repository
 git clone https://github.com/shashankpc7746/FactoryMind-AI.git
-
-# Navigate into the project directory
 cd FactoryMind-AI
 ```
 
@@ -109,30 +114,22 @@ cd FactoryMind-AI
 
 #### Create Virtual Environment
 
-It's a best practice to use a virtual environment to keep your dependencies isolated:
-
 ```bash
-# Create a virtual environment named 'fact-ai'
+# Create a virtual environment
 python -m venv fact-ai
 
-# Activate the virtual environment
-# On Windows:
+# Activate it
+# Windows:
 fact-ai\Scripts\activate
-
-# On macOS/Linux:
+# macOS/Linux:
 source fact-ai/bin/activate
 ```
-
-You should see `(fact-ai)` appear in your terminal prompt, indicating the virtual environment is active.
 
 #### Install Backend Dependencies
 
 ```bash
-# Navigate to the project root and install
 pip install -r backend/requirements.txt
 ```
-
-This will install FastAPI, LangChain, FAISS, ONNX Runtime, and all other dependencies. It may take 2-3 minutes.
 
 > **Note:** The project uses ONNX Runtime instead of PyTorch for text embeddings. This keeps the memory footprint under 300MB — critical for free-tier hosting (512MB RAM).
 
@@ -140,127 +137,66 @@ This will install FastAPI, LangChain, FAISS, ONNX Runtime, and all other depende
 
 ```bash
 # Copy the example environment file
+# Windows:
 copy .env.example .env
-
-# On macOS/Linux:
+# macOS/Linux:
 cp .env.example .env
 ```
 
-Now open the `.env` file in your favorite text editor and add your API keys:
+Open `.env` and add your API keys:
 
 ```env
 # Required API Keys
 GROQ_API_KEY=your_groq_api_key_here
-HUGGINGFACE_API_KEY=your_huggingface_api_key_here
+HF_API_KEY=your_huggingface_api_key_here
 
-# Optional: Configure CORS (add your frontend URL)
-ALLOWED_ORIGINS=http://localhost:5173
-
-# Optional: Customize upload limits
-MAX_FILE_SIZE=10485760  # 10MB default
-```
-
-💡 **Pro Tip:** Never commit your `.env` file to version control. It's already in `.gitignore`.
-
-#### Set Up Firebase Authentication
-
-1. Go to [Firebase Console](https://console.firebase.google.com/) and create a new project
-2. Go to **Authentication → Sign-in method → Google** and enable it
-3. Go to **Project Settings → General → Your apps** and click **Add app** (Web)
-4. Copy the Firebase config values into your `.env` file:
-
-```env
-VITE_FIREBASE_API_KEY=AIzaSy...
+# Firebase Authentication (see FIREBASE_SETUP.md)
+VITE_FIREBASE_API_KEY=your_firebase_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=your-project-id
 VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
 ```
+
+> 💡 **Tip:** For detailed Firebase setup instructions, see [FIREBASE_SETUP.md](FIREBASE_SETUP.md).
 
 #### Start the Backend Server
 
 ```bash
-# Navigate to the backend directory
 cd backend
-
-# Start the FastAPI server with hot-reload
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-You should see output like:
-
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process
-INFO:     Application startup complete.
-```
-
-✅ **Backend is now running at:** `http://localhost:8000`
-
-📖 **API Documentation available at:** `http://localhost:8000/docs`
+✅ **Backend running at:** `http://localhost:8000`
+📖 **API Docs at:** `http://localhost:8000/docs`
 
 ### 🎨 Step 3: Frontend Setup
 
-Open a **new terminal window** (keep the backend running in the first one).
-
-#### Install Frontend Dependencies
+Open a **new terminal** (keep the backend running):
 
 ```bash
-# Make sure you're in the project root directory
+# Install frontend dependencies (from project root)
 npm install
-```
 
-This will install React, TypeScript, Vite, Tailwind CSS, and all UI components. Takes about 1-2 minutes.
-
-#### Configure Frontend Environment (Optional)
-
-By default, the frontend connects to `http://localhost:8000`. If your backend runs on a different URL, create a `.env.local` file:
-
-```env
-VITE_API_URL=http://localhost:8000
-```
-
-#### Start the Development Server
-
-```bash
+# Start the development server
 npm run dev
 ```
 
-You should see:
+✅ **Frontend running at:** `http://localhost:3000`
 
-```
-  VITE v5.x.x  ready in xxx ms
+### 🎉 Step 4: Explore!
 
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: use --host to expose
-```
+Open `http://localhost:3000` in your browser.
 
-✅ **Frontend is now running at:** `http://localhost:5173`
+- If Firebase is configured → you'll see the **Login page** (sign in with Google)
+- If Firebase is NOT configured → you'll go directly to the **Dashboard**
 
-### 🎉 Step 4: Explore the Application!
+**Quick tests:**
 
-Open your browser and navigate to `http://localhost:5173`. You'll see the FactoryMind AI dashboard!
-
-**Try these quick tests:**
-
-1. **Upload a Document** 📄
-
-   - Go to "Document Manager"
-   - Upload a PDF (manual, SOP, policy document)
-   - Wait for "Document indexed successfully"
-
-2. **Ask a Question** 💬
-
-   - Go to "Chat Assistant"
-   - Type: "What are the safety procedures?"
-   - Get AI-powered answers with source citations
-
-3. **Generate a Report** 📊
-   - Go to "Report Generator"
-   - Upload a CSV file with operational data
-   - Watch AI analyze and generate insights
-   - Download the professional PDF report
+1. **Upload a Document** 📄 → Document Manager → Upload a PDF → Wait for indexing
+2. **Ask a Question** 💬 → Chat Assistant → Ask about the document content
+3. **Generate a Report** 📊 → Report Generator → Upload a CSV → Get AI insights + charts
 
 ---
 
@@ -268,76 +204,47 @@ Open your browser and navigate to `http://localhost:5173`. You'll see the Factor
 
 ### Document Management
 
-#### Uploading Documents
-
-1. Click on **"Document Manager"** in the sidebar
+1. Click **"Document Manager"** in the sidebar
 2. Drag and drop PDF files, or click **"Select Files"**
-3. Supported formats: PDF (up to 10MB by default)
-4. Wait for the upload and indexing process to complete
-5. Your documents are now searchable!
-
-#### Managing Documents
-
-- **View All Documents** - See a list of uploaded files with metadata
-- **Delete Documents** - Remove documents you no longer need
-- **File Information** - Check file size, upload date, and status
+3. Supported formats: PDF (up to 10MB)
+4. Real-time status: uploading → processing → indexed ✅
+5. Documents are now searchable via the Chat Assistant
 
 ### Chat Assistant
 
-#### Asking Questions
-
 1. Navigate to **"Chat Assistant"**
-2. Type your question in the input box
-3. Press **Enter** to send (or click the send button)
-4. View AI-generated answers with citations
-5. Click on citations to see which documents were referenced
-
-#### Quick Actions
-
-Use suggested prompts for common queries:
-
-- "Ask about procedures"
-- "Generate report"
-- "Analyze data"
-
-#### Uploading Files for Context
-
-Click the **paperclip icon** to attach PDFs or CSVs directly in the chat for immediate analysis.
+2. Type your question and press **Enter**
+3. View AI-generated answers with source citations
+4. Follow-up questions work naturally with conversation memory
+5. Use suggested prompts: "Ask about procedures", "Generate report", "Analyze data"
+6. Attach PDFs or CSVs directly via the **paperclip icon**
 
 ### Report Generation
 
-#### Creating Reports
-
 1. Go to **"Report Generator"**
-2. Click **"Upload Data File"**
-3. Select a CSV or Excel file with your operational data
-4. Wait for AI to analyze the data
-5. Review the generated report with:
-   - Executive summary
-   - Key metrics and trends
-   - **Interactive visual charts** (bar, line, pie, correlation heatmap)
-   - Statistical observations
-   - Data-driven recommendations
+2. Upload a CSV or Excel file with operational data
+3. AI analyzes and generates: executive summary, key metrics, interactive charts, recommendations
+4. Download as a professional PDF report
 
-#### Downloading Reports
+### Settings & Profile
 
-- Click **"Download PDF"** to save the report
-- Reports are professionally formatted and ready to share
-- All reports are saved in your history
+- **Account Card** — View your Google account info (name, email, photo)
+- **Profile Settings** — Edit role and department (saved to localStorage)
+- **Appearance** — Dark/Light theme, Compact Mode, High Contrast (auto-saved)
+- **Notifications** — Toggle document indexing, report generation, and system update alerts
+- **Danger Zone** — Reset all data (documents, reports, vectors, chat history)
 
-#### Report History
+### Keyboard Shortcuts
 
-- View up to 10 recent reports
-- Delete old reports you no longer need
-- Re-download reports anytime
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+K` | Focus the search bar |
 
 ---
 
 ## 🧪 Sample Data for Testing
 
-### Sample CSV Structure
-
-Create a file named `sample_production_data.csv` to test the report generator:
+Create a file named `sample_production_data.csv`:
 
 ```csv
 Date,Shift,Production_Units,Downtime_Hours,Quality_Pass_Rate,Defects
@@ -347,393 +254,213 @@ Date,Shift,Production_Units,Downtime_Hours,Quality_Pass_Rate,Defects
 2026-01-02,Evening,1205,0.8,98.2,21
 2026-01-03,Morning,1250,0.6,98.7,16
 2026-01-03,Evening,1190,1.5,97.5,29
-2026-01-04,Morning,1275,0.4,99.2,10
-2026-01-04,Evening,1195,1.1,97.9,25
 ```
 
-This will generate a report analyzing production trends, quality metrics, and downtime patterns!
+Upload this in Report Generator to see AI-powered analysis with interactive charts!
 
 ---
 
 ## 🔌 API Documentation
 
-### Interactive API Docs
+### Interactive Docs
 
-Once your backend is running, explore the full API documentation:
-
-- **Swagger UI:** `http://localhost:8000/docs` - Interactive testing interface
-- **ReDoc:** `http://localhost:8000/redoc` - Clean, searchable documentation
+- **Swagger UI:** `http://localhost:8000/docs`
+- **ReDoc:** `http://localhost:8000/redoc`
 
 ### Core Endpoints
 
-#### Health Check
-
 ```http
-GET /health
-```
+GET  /health                       # System status
 
-Returns system status, document count, and report statistics.
-
-#### Document Management
-
-```http
-POST /upload/document              # Upload and index a PDF (background processing)
+POST /upload/document              # Upload and index a PDF
 GET  /indexing-status/{filename}   # Poll indexing progress
 GET  /documents                    # List all documents
-DELETE /documents/{filename}       # Delete document + its vector chunks
-```
+DELETE /documents/{filename}       # Delete document + vector chunks
 
-#### RAG Query (with Conversation Memory)
-
-```http
-POST /chat/query
-Content-Type: application/json
-
-{
-  "question": "What are the quality control procedures?",
-  "history": [
-    { "role": "user", "content": "What is this document about?" },
-    { "role": "assistant", "content": "This document covers..." }
-  ]
-}
-```
-
-Returns AI-generated answer with source citations. The optional `history` field enables follow-up question understanding.
-
-#### Report Generation
-
-```http
+POST /chat/query                   # RAG query with conversation memory
 POST /report/generate              # Upload CSV and generate report
 GET  /reports                      # List all reports
-GET  /reports/{report_id}          # Get specific report details
-GET  /reports/{report_id}/download # Download report PDF
-DELETE /reports/{report_id}        # Delete a report
+GET  /reports/{id}                 # Get report details
+GET  /reports/{id}/download        # Download PDF
+DELETE /reports/{id}               # Delete report
+DELETE /clear-all-data             # Reset everything
 ```
 
 ---
 
-## 🌐 Deployment Guide
+## 🌐 Deployment (Render.com)
 
-### Deploy to Render.com (Recommended)
+Render offers free hosting with automatic deployments from GitHub.
 
-Render offers free hosting with automatic deployments from GitHub!
+1. Push to GitHub
+2. Go to [Render Dashboard](https://dashboard.render.com) → New → Blueprint
+3. Connect your repo — Render detects `render.yaml` automatically
+4. Add environment variables for both backend and frontend services
+5. Add Firebase authorized domain: `your-app.onrender.com` (see [FIREBASE_SETUP.md](FIREBASE_SETUP.md))
 
-#### Prerequisites
-
-- GitHub account
-- Render account ([sign up free](https://render.com))
-- Your API keys ready
-
-#### Quick Deploy (Using Blueprint)
-
-1. **Push to GitHub**
-
-   ```bash
-   git add .
-   git commit -m "Prepare for deployment"
-   git push origin main
-   ```
-
-2. **Connect to Render**
-
-   - Go to [Render Dashboard](https://dashboard.render.com)
-   - Click **"New +"** → **"Blueprint"**
-   - Connect your GitHub repository
-   - Render will detect `render.yaml` automatically
-
-3. **Configure Environment Variables**
-
-   In your **Backend Web Service** settings:
-
-   ```env
-   GROQ_API_KEY=your_groq_api_key
-   HUGGINGFACE_API_KEY=your_huggingface_api_key
-   PYTHON_VERSION=3.10.0
-   ```
-
-4. **Add Persistent Storage**
-
-   - Go to Backend service → **"Disks"**
-   - Add a disk with mount path: `/opt/render/project/src`
-   - This ensures your documents persist between deployments
-
-5. **Update Frontend Environment**
-
-   In your **Static Site** settings:
-
-   ```env
-   VITE_API_URL=https://your-backend.onrender.com
-   ```
-
-6. **Deploy!** 🚀
-   - Both services auto-deploy when you push to GitHub
-   - Free tier includes 750 hours/month
-   - Backend may sleep after 15 minutes of inactivity (wakes on request)
-
-#### 💡 Memory Optimization for Free Tier
-
-The backend uses **ONNX Runtime** instead of PyTorch for text embeddings, keeping peak RAM under ~300MB — well within Render's 512MB free-tier limit. No special configuration is needed; the optimization is built into the codebase.
-
-#### Live URLs
+### Live URLs
 
 - **Backend:** `https://factorymind-ai-backend.onrender.com`
 - **Frontend:** `https://factorymind-ai.onrender.com`
 
+> **Note:** Free tier backend may sleep after 15 minutes of inactivity. First request wakes it up.
 
 ---
 
-## 🛠️ Development
-
-### Project Structure
+## 🛠️ Project Structure
 
 ```
 FactoryMind-AI/
-├── backend/                    # Python FastAPI backend
-│   ├── main.py                # Main application & API routes
-│   ├── rag_engine.py          # RAG pipeline (query routing, memory, contextualization)
-│   ├── report_engine.py       # Report generation logic
-│   ├── llm_client.py          # LLM API client (Groq/LLaMA)
-│   ├── db.py                  # FAISS vector database (with deletion support)
-│   └── requirements.txt       # Python dependencies
+├── backend/                       # Python FastAPI backend
+│   ├── main.py                   # API routes & application entry
+│   ├── rag_engine.py             # RAG pipeline (query routing, memory, context)
+│   ├── report_engine.py          # Report generation & PDF export
+│   ├── llm_client.py             # LLM API client (Groq/LLaMA)
+│   ├── db.py                     # FAISS vector database with deletion support
+│   └── requirements.txt          # Python dependencies
 │
-├── src/                       # React TypeScript frontend
-│   ├── components/            # UI components
-│   │   ├── ChatAssistant.tsx  # Chat interface (session persistence, markdown)
-│   │   ├── DocumentManager.tsx# Document management (indexing status polling)
-│   │   ├── ReportGenerator.tsx# Report generation
-│   │   ├── History.tsx        # History view
-│   │   ├── Settings.tsx       # Settings panel
-│   │   └── ui/                # Reusable UI components (shadcn/ui)
+├── src/                           # React TypeScript frontend
+│   ├── App.tsx                   # Root component with auth guard
+│   ├── main.tsx                  # Entry point
+│   ├── index.css                 # Global styles & design tokens
+│   ├── config/
+│   │   └── firebase.ts           # Firebase initialization (conditional)
+│   ├── contexts/
+│   │   └── AuthContext.tsx        # Authentication state management
+│   ├── hooks/
+│   │   └── useKeyboardShortcuts.ts # Global keyboard shortcuts
+│   ├── components/
+│   │   ├── Login.tsx             # Google Sign-In page
+│   │   ├── ChatAssistant.tsx     # Chat with conversation memory
+│   │   ├── DocumentManager.tsx   # Document upload & management
+│   │   ├── ReportGenerator.tsx   # Report generation with charts
+│   │   ├── History.tsx           # Activity history & search
+│   │   ├── Settings.tsx          # Profile, appearance, notifications
+│   │   ├── Header.tsx            # Top bar with search (Ctrl+K)
+│   │   ├── Sidebar.tsx           # Navigation with sign-out
+│   │   └── ui/                   # Shadcn/UI component library
 │   ├── services/
-│   │   ├── api.ts             # API client (with conversation history support)
-│   │   └── events.ts          # Event emitter for notifications
-│   ├── styles/
-│   │   └── globals.css        # Global styles
-│   └── main.tsx               # App entry point
+│   │   ├── api.ts                # Backend API client
+│   │   └── events.ts             # Notification event emitter
+│   └── images/
+│       └── FactoryMind-AI.png    # App logo
 │
-├── .env.example               # Environment variables template
-├── package.json               # Node.js dependencies
-├── render.yaml                # Render deployment config
-└── README.md                  # This file
-```
-
-### Building for Production
-
-```bash
-# Build frontend
-npm run build
-
-# Output will be in 'build/' directory
-# Serve with any static file server
-```
-
-### Running Tests
-
-```bash
-# Check backend health
-curl http://localhost:8000/health
-
-# Test the API interactively
-# Visit http://localhost:8000/docs for Swagger UI
+├── .env.example                   # Environment variables template
+├── FIREBASE_SETUP.md              # Step-by-step Firebase guide
+├── render.yaml                    # Render deployment config
+├── vite.config.ts                 # Vite build configuration
+├── tsconfig.json                  # TypeScript configuration
+├── package.json                   # Node.js dependencies
+├── LICENSE                        # MIT License
+└── README.md                      # This file
 ```
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Common Issues and Solutions
+### ❌ Blank page after adding Firebase config
 
-#### ❌ "Module not found" Error (Python)
+**Cause:** Vite doesn't hot-reload `.env` changes.
+**Fix:** Restart the dev server: stop it, then run `npm run dev` again.
 
-**Problem:** Missing Python dependencies
-
-**Solution:**
+### ❌ "Module not found" (Python)
 
 ```bash
-pip install -r requirements.txt --upgrade
+pip install -r backend/requirements.txt --upgrade
 ```
 
-#### ❌ "API Key not found" Error
+### ❌ "API Key not found"
 
-**Problem:** Environment variables not configured
+1. Check `.env` exists in project root (not `.env.example`)
+2. Verify API keys are set
+3. Restart the backend
 
-**Solution:**
+### ❌ Google Sign-In popup closes immediately
 
-1. Check that `.env` file exists in project root
-2. Verify it contains your API keys
-3. Restart the backend server
+1. Check browser console for Firebase errors
+2. Verify `VITE_FIREBASE_AUTH_DOMAIN` is correct
+3. Ensure Google Sign-In is enabled in Firebase Console
 
-#### ❌ Frontend Can't Connect to Backend
+### ❌ "auth/unauthorized-domain"
 
-**Problem:** CORS or connection issues
+Add your deployment domain to Firebase Console → Authentication → Settings → Authorized domains.
 
-**Solution:**
+### ❌ Frontend can't connect to backend
 
 1. Verify backend is running: `http://localhost:8000/health`
-2. Check `.env` has correct `ALLOWED_ORIGINS`
-3. Verify `.env.local` has correct `VITE_API_URL`
-4. Check browser console for CORS errors
+2. Check `ALLOWED_ORIGINS` in `.env` includes your frontend URL
+3. Check browser console for CORS errors
 
-#### ❌ FAISS Installation Fails (Windows)
-
-**Problem:** Binary wheel compatibility
-
-**Solution:**
+### ❌ Port already in use
 
 ```bash
-pip install faiss-cpu --no-cache-dir
-```
-
-#### ❌ Port Already in Use
-
-**Problem:** Port 8000 or 5173 is occupied
-
-**Solution:**
-
-For backend (port 8000):
-
-```bash
-# Find the process
+# Windows — find and kill the process:
 netstat -ano | findstr :8000
-
-# Kill the process (replace PID)
 taskkill /PID <PID> /F
 ```
-
-For frontend (port 5173):
-
-```bash
-# Find the process
-netstat -ano | findstr :5173
-
-# Kill the process
-taskkill /PID <PID> /F
-```
-
-#### ❌ Upload Fails - File Too Large
-
-**Problem:** File exceeds size limit
-
-**Solution:** Update `MAX_FILE_SIZE` in `.env`:
-
-```env
-MAX_FILE_SIZE=20971520  # 20MB
-```
-
-#### ❌ Slow Response Times
-
-**Possible causes:**
-
-- First query after idle time (vector store loading)
-- Large documents being processed
-- Groq API rate limits
-
-**Solutions:**
-
-- Wait for initial load to complete
-- Split large PDFs into smaller chunks
-- Check Groq API usage limits
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how you can help:
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** your changes: `git commit -m "Add amazing feature"`
+4. **Push** to your fork: `git push origin feature/amazing-feature`
+5. **Open** a Pull Request
 
-1. **Fork the Repository**
-2. **Create a Feature Branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Commit Your Changes**
-   ```bash
-   git commit -m "Add amazing feature"
-   ```
-4. **Push to Your Fork**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-5. **Open a Pull Request**
+---
 
-### Development Guidelines
+## 🚀 What's New in v2.0
 
-- Follow existing code style and conventions
-- Add comments for complex logic
-- Update documentation for new features
-- Test thoroughly before submitting PR
+### ✅ Shipped
+
+- 🔐 **Google Authentication** — Firebase Sign-In with persistent sessions
+- 🛡️ **Auth Guard** — Login page protects the dashboard
+- 👤 **Profile Settings** — Google account card, auto-saving preferences
+- ⌨️ **Keyboard Shortcuts** — `Ctrl+K` for search focus
+- 🔄 **History Page** — Refresh, search, stats bar, improved empty states
+- 🚪 **Sidebar Sign-out** — Visible sign-out button when auth is enabled
+- 🖼️ **Brand Consistency** — FactoryMind AI logo on login & loading screens
+
+### ✅ Shipped in v1.0
+
+- 📊 Interactive charts in reports (bar, line, pie, heatmap)
+- 💬 Conversation memory for follow-up questions
+- 🧠 Smart query routing (greetings, meta-questions)
+- 📡 Real-time document indexing status
+- 💾 Chat session persistence
+- 🗑️ Proper document deletion from FAISS index
+- ⚡ ONNX Runtime optimization (runs on 512MB RAM)
+
+### 🔮 Coming Soon
+
+- 🌍 Multi-language support
+- 🔗 Slack/Teams integration
+- 📧 Scheduled reports & email notifications
+- 🎨 Customizable report templates
+- 👥 Multi-user workspaces with role-based access
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
+MIT License — see [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
-### UI Components
-
-This project uses components from [shadcn/ui](https://ui.shadcn.com/) - Beautiful, accessible UI components built with Radix UI and Tailwind CSS (MIT License).
-
-### Images
-
-Sample images from [Unsplash](https://unsplash.com) used under their [free license](https://unsplash.com/license).
-
-### Technologies
-
-- **FastAPI** - Modern Python web framework
-- **LangChain** - Building applications with LLMs
-- **FAISS** - Facebook AI Similarity Search
-- **ONNX Runtime** - Lightweight ML inference
-- **Groq** - Ultra-fast LLM inference
-- **HuggingFace** - NLP models and tokenizers
-- **React & TypeScript** - Modern web development
-- **Tailwind CSS** - Utility-first CSS framework
-- **Vite** - Next-generation frontend tooling
-
----
-
-## 📞 Support
-
-### Need Help?
-
-- 🐛 Found a bug? [Open an issue](https://github.com/shashankpc7746/FactoryMind-AI/issues)
-- 💬 Have questions? Start a [discussion](https://github.com/shashankpc7746/FactoryMind-AI/discussions)
-- 📧 Contact: [shashankgupta7746@gmail.com]
-
-
-## 🚀 What's Next?
-
-### ✅ Shipped in v1.0
-
-- ✅ ~~Advanced analytics dashboard~~ — Interactive charts in reports
-- ✅ ~~Conversation memory~~ — Follow-up questions work naturally
-- ✅ ~~Smart query routing~~ — Greetings, meta-questions handled intelligently
-- ✅ ~~Real-time indexing status~~ — Track document processing live
-- ✅ ~~Session persistence~~ — Chat survives page refreshes
-- ✅ ~~Proper document deletion~~ — FAISS index rebuilt on delete
-- ✅ ~~ONNX Runtime optimization~~ — Runs on 512MB RAM free tier
-
-### 🔮 Coming Soon
-
-- 🔐 User authentication and role-based access
-- 🌍 Multi-language support
-- 🔗 Integration with popular tools (Slack, Teams, etc.)
-- 📧 Email notifications and scheduled reports
-- 🎨 Customizable report templates
-
----
-
-## ⭐ Star This Repository
-
-If you find FactoryMind AI helpful, please give it a star! It helps others discover the project and motivates us to keep improving it.
+- [shadcn/ui](https://ui.shadcn.com/) — Beautiful, accessible UI components
+- [Firebase](https://firebase.google.com/) — Authentication infrastructure
+- [Groq](https://groq.com/) — Ultra-fast LLM inference
+- [LangChain](https://langchain.com/) — RAG pipeline framework
+- [FAISS](https://github.com/facebookresearch/faiss) — Vector similarity search
 
 ---
 
 <div align="center">
 
-**Built with ❤️ by the Shashank**
+**Built with ❤️ by Shashank**
 
 [🌐 Live Demo](https://factorymind-ai.onrender.com) • [🐛 Report Bug](https://github.com/shashankpc7746/FactoryMind-AI/issues) • [✨ Request Feature](https://github.com/shashankpc7746/FactoryMind-AI/issues)
 
